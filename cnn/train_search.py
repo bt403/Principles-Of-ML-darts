@@ -12,7 +12,7 @@ import torch.utils
 import torch.nn.functional as F
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
-
+from face_dataset import DataLoaderFace
 from torch.autograd import Variable
 from model_search import Network
 from architect import Architect
@@ -56,6 +56,20 @@ logging.getLogger().addHandler(fh)
 
 CIFAR_CLASSES = 10
 
+class ContrastiveLoss(torch.nn.Module):
+    """
+    Contrastive loss function.
+    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    """
+
+    def __init__(self, margin=1.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, dist, label):
+        loss = torch.mean(1/2*(label) * torch.pow(dist, 2) +
+                                      1/2*(1-label) * torch.pow(torch.clamp(self.margin - dist, min=0.0), 2))
+        return loss
 
 def main():
   if not torch.cuda.is_available():
@@ -71,7 +85,8 @@ def main():
   logging.info('gpu device = %d' % args.gpu)
   logging.info("args = %s", args)
 
-  criterion = nn.CrossEntropyLoss()
+  #criterion = nn.CrossEntropyLoss()
+  criterion = torch.jit.script(ContrastiveLoss())
   criterion = criterion.cuda()
   model = Network(args.init_channels, CIFAR_CLASSES, args.layers, criterion)
   model = model.cuda()
@@ -83,6 +98,9 @@ def main():
       momentum=args.momentum,
       weight_decay=args.weight_decay)
 
+  #optimizer = optim.Adam(face_model.parameters(), lr=0.0001)
+
+
   train_transform, valid_transform = utils._data_transforms_cifar10(args)
   train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
 
@@ -90,10 +108,12 @@ def main():
   indices = list(range(num_train))
   split = int(np.floor(args.train_portion * num_train))
 
-  train_queue = torch.utils.data.DataLoader(
-      train_data, batch_size=args.batch_size,
-      sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
-      pin_memory=True, num_workers=2)
+  #train_queue = torch.utils.data.DataLoader(
+      #train_data, batch_size=args.batch_size,
+      #sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
+      #pin_memory=True, num_workers=2)
+  dataLoaderFace = DataLoaderFace(args.batch_size, 4)
+  train_queue = dataLoaderFace.get_trainloader()
 
   valid_queue = torch.utils.data.DataLoader(
       train_data, batch_size=args.batch_size,
@@ -132,11 +152,67 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
 
-  for step, (input, target) in enumerate(train_queue):
-    model.train()
-    n = input.size(0)
+  for step, data in enumerate(train_queue):
 
-    input = Variable(input, requires_grad=False).cuda()
+
+    model.train()
+    #n = input.size(0)
+    #b_size = data[0].shape[0]
+
+    anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0].cuda(), data[1].cuda(), data[2].cuda(), data[3], data[4]
+    
+    anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(train_queue))
+    #input_search = Variable(input_search, requires_grad=False).cuda()
+    #target_search = Variable(target_search, requires_grad=False).cuda(non_blocking=True)
+
+    optimizer.zero_grad()
+
+    anchor_out = model(anchor_img)
+    positive_out = model(positive_img)
+    negative_out = model(negative_img)
+
+    dist_p = (positive_out - anchor_out).pow(2).sum(1)
+    dist_n = (negative_out - anchor_out).pow(2).sum(1)
+    
+    labels_p = np.ones((1, positive_out.shape[0]), dtype=None)
+    loss_p = criterion(dist_p, torch.from_numpy(labels_p).cuda())
+    labels_n = np.zeros((1, negative_out.shape[0]), dtype=None)
+    loss_n = criterion(dist_n, torch.from_numpy(labels_n).cuda())
+
+    anchor_out_search = model(anchor_img_search)
+    positive_out_search = model(positive_img_search)
+    negative_out_search = model(negative_img_search)
+
+    dist_p_search = (positive_out_search - anchor_out_search).pow(2).sum(1)
+    dist_n_search = (negative_out_search - anchor_out_search).pow(2).sum(1)
+    
+    labels_p_search = np.ones((1, positive_out_search.shape[0]), dtype=None)
+    labels_n_search = np.zeros((1, negative_out_search.shape[0]), dtype=None)
+
+    #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
+    architect.step(dist_p, labels_p, dist_n, labels_n, dist_p_search, labels_p_search, dist_n_search, labels_n_search, lr, optimizer, unrolled=args.unrolled)
+
+    loss = loss_n + loss_p
+
+    loss.backward()
+    nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
+    optimizer.step()
+
+    '''prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+    objs.update(loss.data.item(), n)
+    top1.update(prec1.data.item(), n)
+    top5.update(prec5.data.item(), n)
+
+    if step % args.report_freq == 0:
+      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)'''
+    
+    return top1.avg, objs.avg
+
+
+
+
+
+    '''input = Variable(input, requires_grad=False).cuda()
     target = Variable(target, requires_grad=False).cuda(non_blocking=True)
 
     # get a random minibatch from the search queue with replacement
@@ -162,7 +238,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     if step % args.report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-  return top1.avg, objs.avg
+  return top1.avg, objs.avg'''
 
 
 def infer(valid_queue, model, criterion):

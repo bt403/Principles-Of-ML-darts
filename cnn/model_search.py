@@ -5,6 +5,7 @@ from operations import *
 from torch.autograd import Variable
 from genotypes import PRIMITIVES
 from genotypes import Genotype
+import numpy as np
 
 
 class MixedOp(nn.Module):
@@ -112,9 +113,10 @@ class Network(nn.Module):
     logits = self.classifier(out.view(out.size(0),-1))
     return logits
 
-  def _loss(self, input, target):
-    logits = self(input)
-    return self._criterion(logits, target) 
+  def _loss(self, dist, target):
+    #logits = self(input)
+    #return self._criterion(logits, target) 
+    return self._criterion(dist,target)
 
   def _initialize_alphas(self):
     k = sum(1 for i in range(self._steps) for n in range(2+i))

@@ -17,8 +17,10 @@ class Architect(object):
     self.optimizer = torch.optim.Adam(self.model.arch_parameters(),
         lr=args.arch_learning_rate, betas=(0.5, 0.999), weight_decay=args.arch_weight_decay)
 
-  def _compute_unrolled_model(self, input, target, eta, network_optimizer):
-    loss = self.model._loss(input, target)
+  def _compute_unrolled_model(self, input_p, target_p, input_n, target_n, eta, network_optimizer):
+    loss_p = self.model._loss(input_p, target_p)
+    loss_n = self.model._loss(input_n, target_n)
+    loss = loss_p + loss_n
     theta = _concat(self.model.parameters()).data
     try:
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)
@@ -40,14 +42,16 @@ class Architect(object):
     loss = self.model._loss(input_valid, target_valid)
     loss.backward()
 
-  def _backward_step_unrolled(self, input_train, target_train, input_valid, target_valid, eta, network_optimizer):
-    unrolled_model = self._compute_unrolled_model(input_train, target_train, eta, network_optimizer)
-    unrolled_loss = unrolled_model._loss(input_valid, target_valid)
+  def _backward_step_unrolled(self, input_train_p, target_train_p, input_train_n, target_train_n, input_valid_p, target_valid_p, input_valid_n, target_valid_n, eta, network_optimizer):
+    unrolled_model = self._compute_unrolled_model(input_train_p, target_train_p, input_train_n, target_train_n, eta, network_optimizer)
+    unrolled_loss_p = unrolled_model._loss(input_valid_p, target_valid_p)
+    unrolled_loss_n = unrolled_model._loss(input_valid_n, target_valid_n)
+    unrolled_loss = unrolled_loss_n + unrolled_loss_p
 
     unrolled_loss.backward()
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     vector = [v.grad.data for v in unrolled_model.parameters()]
-    implicit_grads = self._hessian_vector_product(vector, input_train, target_train)
+    implicit_grads = self._hessian_vector_product(vector, input_train_p, target_train_p, input_train_n, target_train_n)
 
     for g, ig in zip(dalpha, implicit_grads):
       g.data.sub_(eta, ig.data)
@@ -73,16 +77,20 @@ class Architect(object):
     model_new.load_state_dict(model_dict)
     return model_new.cuda()
 
-  def _hessian_vector_product(self, vector, input, target, r=1e-2):
+  def _hessian_vector_product(self, vector, input_p, target_p, input_n, target_n, r=1e-2):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
       p.data.add_(R, v)
-    loss = self.model._loss(input, target)
+    loss_p = self.model._loss(input_p, target_p)
+    loss_n = self.model._loss(input_n, target_n)
+    loss = loss_p + loss_n
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):
       p.data.sub_(2*R, v)
-    loss = self.model._loss(input, target)
+    loss_p = self.model._loss(input_p, target_p)
+    loss_n = self.model._loss(input_p, target_p)
+    loss = loss_p + loss_n
     grads_n = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):

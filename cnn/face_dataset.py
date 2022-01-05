@@ -6,7 +6,7 @@ import random
 from PIL import Image
 
 class FaceDataset(torch.utils.data.Dataset):
-  def __init__(self, in_path, in_path_td, mode='train', img_size=(250, 250)):
+  def __init__(self, in_path, in_path_td, mode='train', img_size=(64, 64)):
     super(FaceDataset, self).__init__()
 
     self.mode = mode #train or test
@@ -43,10 +43,10 @@ class FaceDataset(torch.utils.data.Dataset):
   def __getitem__(self, idx):
     if self.mode == "train":
       index = idx
-      positive_list = np.array([])
+      positive_list = numpy.array([])
       while (positive_list.size == 0):
         anchor_label = self.data[index][1]
-        mask = np.ones(self.data.shape[0], dtype=bool)
+        mask = numpy.ones(self.data.shape[0], dtype=bool)
         mask[index] = False
         positive_list = self.data[mask]
         positive_list = positive_list[positive_list[:,1]==anchor_label] 
@@ -78,9 +78,9 @@ class FaceDataset(torch.utils.data.Dataset):
       anchor_img = anchor_img.crop(box)
       anchor_img = anchor_img.resize(self.img_size)
 
-      anchor_img_t = transforms.ToTensor()(np.array(anchor_img))
-      positive_img_t = transforms.ToTensor()(np.array(positive_img))
-      negative_img_t = transforms.ToTensor()(np.array(negative_img))
+      anchor_img_t = transforms.ToTensor()(numpy.array(anchor_img))
+      positive_img_t = transforms.ToTensor()(numpy.array(positive_img))
+      negative_img_t = transforms.ToTensor()(numpy.array(negative_img))
       return self.transform(anchor_img_t),  self.transform(positive_img_t),  self.transform(negative_img_t), anchor_label, negative_item[1]
 
 

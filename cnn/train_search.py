@@ -190,7 +190,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     labels_n_search = np.zeros((1, negative_out_search.shape[0]), dtype=None)
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    architect.step(dist_p, labels_p, dist_n, labels_n, dist_p_search, labels_p_search, dist_n_search, labels_n_search, lr, optimizer, unrolled=args.unrolled)
+    architect.step(Variable(dist_p, requires_grad=False), Variable(labels_p, requires_grad=False), Variable(dist_n, requires_grad=False), Variable(labels_n, requires_grad=False), Variable(dist_p_search, requires_grad=False), Variable(labels_p_search, requires_grad=False), Variable(dist_n_search, requires_grad=False), Variable(labels_n_search, requires_grad=False), lr, optimizer, unrolled=args.unrolled)
 
     loss = loss_n + loss_p
 

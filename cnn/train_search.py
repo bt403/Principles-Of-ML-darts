@@ -160,7 +160,6 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     #b_size = data[0].shape[0]
 
     anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0].cuda(), data[1].cuda(), data[2].cuda(), data[3], data[4]
-    
     anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(train_queue))
     #input_search = Variable(input_search, requires_grad=False).cuda()
     #target_search = Variable(target_search, requires_grad=False).cuda(non_blocking=True)
@@ -179,9 +178,9 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     labels_n = np.zeros((1, negative_out.shape[0]), dtype=None)
     loss_n = criterion(dist_n, torch.from_numpy(labels_n).cuda())
 
-    anchor_out_search = model(anchor_img_search)
-    positive_out_search = model(positive_img_search)
-    negative_out_search = model(negative_img_search)
+    anchor_out_search = model(anchor_img_search.cuda())
+    positive_out_search = model(positive_img_search.cuda())
+    negative_out_search = model(negative_img_search.cuda())
 
     dist_p_search = (positive_out_search - anchor_out_search).pow(2).sum(1)
     dist_n_search = (negative_out_search - anchor_out_search).pow(2).sum(1)
@@ -190,7 +189,14 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     labels_n_search = np.zeros((1, negative_out_search.shape[0]), dtype=None)
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    architect.step(Variable(dist_p, requires_grad=False), Variable(labels_p, requires_grad=False), Variable(dist_n, requires_grad=False), Variable(labels_n, requires_grad=False), Variable(dist_p_search, requires_grad=False), Variable(labels_p_search, requires_grad=False), Variable(dist_n_search, requires_grad=False), Variable(labels_n_search, requires_grad=False), lr, optimizer, unrolled=args.unrolled)
+    architect.step(dist_p.cuda(), 
+    Variable(torch.from_numpy(labels_p), requires_grad=False).cuda(), 
+    dist_n.cuda(), 
+    Variable(torch.from_numpy(labels_n), requires_grad=False).cuda(), 
+    dist_p_search.cuda(), 
+    Variable(torch.from_numpy(labels_p_search), requires_grad=False).cuda(), 
+    dist_n_search.cuda(), 
+    Variable(torch.from_numpy(labels_n_search), requires_grad=False).cuda(), lr, optimizer, unrolled=args.unrolled)
 
     loss = loss_n + loss_p
 

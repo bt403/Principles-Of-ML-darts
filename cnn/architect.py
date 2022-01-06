@@ -42,6 +42,8 @@ class Architect(object):
     else:
         self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     self.optimizer.step()
+    print("ALPHAS after optimizer step")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
 
   def _backward_step(self, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search):
     loss = self.model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)

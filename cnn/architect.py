@@ -81,6 +81,7 @@ class Architect(object):
 
   def _hessian_vector_product(self, vector, input_p, target_p, input_n, target_n, r=1e-2):
     R = r / _concat(vector).norm()
+    print(R)
     for p, v in zip(self.model.parameters(), vector):
       print("data")
       print(type(p.data))

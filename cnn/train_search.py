@@ -163,44 +163,29 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     anchor_out = model(anchor_img.cuda())
     positive_out = model(positive_img.cuda())
     negative_out = model(negative_img.cuda())
-
-    anchor_out.retain_grad()
-    positive_out.retain_grad()
-    negative_out.retain_grad()
-
-    dist_p = (positive_out - anchor_out).pow(2).sum(1)
-    dist_n = (negative_out - anchor_out).pow(2).sum(1)
-    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)).cuda()
-    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)).cuda()
-    
-    anchor_out_search = model(anchor_img_search.cuda())
     positive_out_search = model(positive_img_search.cuda())
     negative_out_search = model(negative_img_search.cuda())
 
-    anchor_out_search.retain_grad()
-    positive_out_search.retain_grad()
-    negative_out_search.retain_grad()
-
-    dist_p_search = (positive_out_search - anchor_out_search).pow(2).sum(1)
-    dist_n_search = (negative_out_search - anchor_out_search).pow(2).sum(1)
-    labels_p_search = torch.from_numpy(np.ones((1, positive_out_search.shape[0]), dtype=None)).cuda()
+    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)).cuda()
+    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)).cuda()
+    labels_p_search = torch.from_numpy(np.zeros((1, positive_out_search.shape[0]), dtype=None)).cuda()
     labels_n_search = torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None)).cuda()
 
-    dist_p.retain_grad()
-    dist_n.retain_grad()
-    dist_p_search.retain_grad()
-    dist_n_search.retain_grad()
-
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    architect.step(
-      dist_p, labels_p, 
-      dist_n, labels_n,
-      dist_p_search, labels_p_search,
-      dist_n_search, labels_n_search, 
-    lr, optimizer, unrolled=args.unrolled)
+    architect.step(anchor_img, positive_img, negative_img, labels_p, labels_n,
+      anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
-    
+
+    #anchor_out.retain_grad()
+    #positive_out.retain_grad()
+    #negative_out.retain_grad()
+
+    dist_p = (positive_out - anchor_out).pow(2).sum(1)
+    dist_n = (negative_out - anchor_out).pow(2).sum(1)
+    #dist_p.retain_grad()
+    #dist_n.retain_grad()
+
     loss_p = criterion(dist_p, labels_p)
     loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p

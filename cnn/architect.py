@@ -34,25 +34,23 @@ class Architect(object):
     unrolled_model = self._construct_model_from_theta(theta.sub(eta, moment+dtheta))
     return unrolled_model
 
-  def step(self, input_train_p, target_train_p, input_train_n, target_train_n, input_valid_p, target_valid_p, input_valid_n, target_valid_n,  eta, network_optimizer, unrolled):
+  def step(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
+      anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search,  eta, network_optimizer, unrolled):
     self.optimizer.zero_grad()
     if unrolled:
-        self._backward_step_unrolled(input_train_p, target_train_p, input_train_n, target_train_n, input_valid_p, target_valid_p, input_valid_n, target_valid_n, eta, network_optimizer)
+        self._backward_step_unrolled(anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
     else:
-        self._backward_step(input_valid_p, target_valid_p, input_valid_n, target_valid_n)
+        self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     self.optimizer.step()
 
-  def _backward_step(self, input_valid_p, target_valid_p, input_valid_n, target_valid_n):
-    loss_p = self.model._loss(input_valid_p, target_valid_p)
-    loss_n = self.model._loss(input_valid_n, target_valid_n)
-    loss = loss_p + loss_n
+  def _backward_step(self, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search):
+    loss = self.model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     loss.backward()
 
-  def _backward_step_unrolled(self, input_train_p, target_train_p, input_train_n, target_train_n, input_valid_p, target_valid_p, input_valid_n, target_valid_n, eta, network_optimizer):
-    unrolled_model = self._compute_unrolled_model(input_train_p, target_train_p, input_train_n, target_train_n, eta, network_optimizer)
-    unrolled_loss_p = unrolled_model._loss(input_valid_p, target_valid_p)
-    unrolled_loss_n = unrolled_model._loss(input_valid_n, target_valid_n)
-    unrolled_loss = unrolled_loss_n + unrolled_loss_p
+  def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
+      anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
+    unrolled_model = self._compute_unrolled_model(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
+    unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     unrolled_loss.backward()
     print("-----")
     for v in unrolled_model.arch_parameters():
@@ -62,7 +60,7 @@ class Architect(object):
     #for v in unrolled_model.parameters():
       #print(v.grad)
     vector = [v.grad.data for v in unrolled_model.parameters()]
-    implicit_grads = self._hessian_vector_product(vector, input_train_p, target_train_p, input_train_n, target_train_n)
+    implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
 
     for g, ig in zip(dalpha, implicit_grads):
       g.data.sub_(eta, ig.data)

@@ -113,10 +113,23 @@ class Network(nn.Module):
     logits = self.classifier(out.view(out.size(0),-1))
     return logits
 
-  def _loss(self, dist, target):
+  def _loss(self, anchor_img, positive_img, negative_img, labels_p, labels_n):
     #logits = self(input)
     #return self._criterion(logits, target) 
-    return self._criterion(dist,target)
+    anchor_out = self(anchor_img)
+    positive_out = self(positive_img)
+    negative_out = self(negative_img)
+
+    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)).cuda()
+    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)).cuda()
+
+    dist_p = (positive_out - anchor_out).pow(2).sum(1)
+    dist_n = (negative_out - anchor_out).pow(2).sum(1)
+
+    loss_p = self._criterion(dist_p, labels_p)
+    loss_n = self._criterion(dist_n, labels_n)
+    loss = loss_n + loss_p
+    return loss
 
   def _initialize_alphas(self):
     k = sum(1 for i in range(self._steps) for n in range(2+i))

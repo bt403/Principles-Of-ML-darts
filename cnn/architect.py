@@ -17,10 +17,8 @@ class Architect(object):
     self.optimizer = torch.optim.Adam(self.model.arch_parameters(),
         lr=args.arch_learning_rate, betas=(0.5, 0.999), weight_decay=args.arch_weight_decay)
 
-  def _compute_unrolled_model(self, input_p, target_p, input_n, target_n, eta, network_optimizer):
-    loss_p = self.model._loss(input_p, target_p)
-    loss_n = self.model._loss(input_n, target_n)
-    loss = loss_p + loss_n
+  def _compute_unrolled_model(self, anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer):
+    loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     theta = _concat(self.model.parameters()).data
     try:
       #for v in self.model.parameters():
@@ -49,7 +47,7 @@ class Architect(object):
 
   def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
       anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
-    unrolled_model = self._compute_unrolled_model(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
+    unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     unrolled_loss.backward()
     print("-----")

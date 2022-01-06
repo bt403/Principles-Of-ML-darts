@@ -3,6 +3,7 @@ import torch.nn as nn
 from operations import *
 from torch.autograd import Variable
 from utils import drop_path
+import torch.nn.functional as F
 
 
 class Cell(nn.Module):
@@ -152,7 +153,7 @@ class NetworkCIFAR(nn.Module):
         if self._auxiliary and self.training:
           logits_aux = self.auxiliary_head(s1)
     out = self.global_pooling(s1)
-    logits = self.classifier(out.view(out.size(0),-1))
+    logits = F.normalize(self.classifier(out.view(out.size(0),-1)), p=2, dim=-1)
     return logits, logits_aux
 
 

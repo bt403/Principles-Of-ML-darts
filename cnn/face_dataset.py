@@ -40,7 +40,10 @@ class FaceDataset(torch.utils.data.Dataset):
     self.data_val =  numpy.array(list(zip(self.imgs_path_val, self.labels_val)))
 
   def __len__(self):
-    return len(self.imgs_path)
+    if (self.mode == "train"):
+      return len(self.imgs_path)
+    else:
+      return len(self.imgs_path_val)
 
   def __getitem__(self, idx):
     if self.mode == "train":

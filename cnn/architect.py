@@ -88,7 +88,9 @@ class Architect(object):
       print(type(R))
       print("type v")
       print(type(v))
-      p.data.add_(R, v)
+      #p.data.add_(R, v)
+      p.data.add_(R)
+      p.data.add_(v)
     loss_p = self.model._loss(input_p, target_p)
     loss_n = self.model._loss(input_n, target_n)
     loss = loss_p + loss_n

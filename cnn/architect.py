@@ -21,6 +21,8 @@ class Architect(object):
     loss_p = self.model._loss(input_p, target_p)
     loss_n = self.model._loss(input_n, target_n)
     loss = loss_p + loss_n
+    print("losss")
+    print(loss)
     theta = _concat(self.model.parameters()).data
     try:
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)

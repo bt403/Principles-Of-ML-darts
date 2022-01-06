@@ -23,8 +23,8 @@ class Architect(object):
     loss = loss_p + loss_n
     theta = _concat(self.model.parameters()).data
     try:
-      for v in self.model.parameters():
-        print(network_optimizer.state[v])
+      #for v in self.model.parameters():
+      #  print(network_optimizer.state[v])
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)
     except Exception as e:
       print("except")
@@ -57,11 +57,18 @@ class Architect(object):
     print("-----")
     for v in unrolled_model.arch_parameters():
       print(v.grad)
+
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     print("-----")
     #for v in unrolled_model.parameters():
       #print(v.grad)
-    vector = [v.grad.data for v in unrolled_model.parameters()]
+    #vector = [v.grad.data for v in unrolled_model.parameters()]
+    vector = []
+    for v in unrolled_model.parameters():
+      if (v.grad):
+        print("v grad data")
+        print(v.grad.data)
+        vector.push(v.grad.data)
     implicit_grads = self._hessian_vector_product(vector, input_train_p, target_train_p, input_train_n, target_train_n)
 
     for g, ig in zip(dalpha, implicit_grads):

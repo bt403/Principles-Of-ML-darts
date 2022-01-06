@@ -127,7 +127,9 @@ class Network(nn.Module):
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
 
     loss_p = self._criterion(dist_p, labels_p)
+    print("----before----")
     loss_n = self._criterion(dist_n, labels_n)
+    print("after")
     loss = loss_n + loss_p
     return loss
 

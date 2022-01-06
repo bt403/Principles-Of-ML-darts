@@ -57,8 +57,9 @@ class Architect(object):
 
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     vector = [v.grad.data for v in unrolled_model.parameters()]
-    '''implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
-
+    implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
+    print("implicit grads")
+    print(implicit_grads)
     for g, ig in zip(dalpha, implicit_grads):
       g.data.sub_(eta, ig.data)
 
@@ -66,7 +67,7 @@ class Architect(object):
       if v.grad is None:
         v.grad = Variable(g.data)
       else:
-        v.grad.data.copy_(g.data)'''
+        v.grad.data.copy_(g.data)
 
   def _construct_model_from_theta(self, theta):
     model_new = self.model.new()
@@ -87,8 +88,7 @@ class Architect(object):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
       p.data.add_(R, v)
-      #p.data.add_(R)
-      #p.data.add_(v)
+
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 

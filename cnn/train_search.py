@@ -192,7 +192,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p
 
-    loss.backward()
+    #loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 

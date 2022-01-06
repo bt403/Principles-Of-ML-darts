@@ -19,6 +19,7 @@ class Architect(object):
 
   def _compute_unrolled_model(self, anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer):
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
+    print("loss 3")
     theta = _concat(self.model.parameters()).data
     try:
       #for v in self.model.parameters():
@@ -47,12 +48,14 @@ class Architect(object):
 
   def _backward_step(self, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search):
     loss = self.model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
+    print("loss 4")
     loss.backward()
 
   def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
       anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
     unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
+    print("loss 5")
     unrolled_loss.backward()
 
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
@@ -88,7 +91,6 @@ class Architect(object):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
       p.data.add_(R, v)
-
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     print("losss 1")
     print(loss)

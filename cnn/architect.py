@@ -41,7 +41,7 @@ class Architect(object):
         self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     print("printing params")
     for data in self.model.parameters():
-      print(data, torch.isfinite(data.grad).all())
+      print(data)
     self.optimizer.step()
 
 

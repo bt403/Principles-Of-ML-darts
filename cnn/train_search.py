@@ -190,14 +190,16 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     dist_n_search.retain_grad()
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    architect.step(dist_p.cuda(), 
-    Variable(torch.from_numpy(labels_p), requires_grad=False).cuda(), 
-    dist_n.cuda(), 
-    Variable(torch.from_numpy(labels_n), requires_grad=False).cuda(), 
-    dist_p_search.cuda(), 
-    Variable(torch.from_numpy(labels_p_search), requires_grad=False).cuda(), 
-    dist_n_search.cuda(), 
-    Variable(torch.from_numpy(labels_n_search), requires_grad=False).cuda(), lr, optimizer, unrolled=args.unrolled)
+    architect.step(
+      dist_p.cuda(), 
+      Variable(torch.from_numpy(labels_p), requires_grad=False).cuda(), 
+      dist_n.cuda(), 
+      Variable(torch.from_numpy(labels_n), requires_grad=False).cuda(), 
+      dist_p_search.cuda(), 
+      Variable(torch.from_numpy(labels_p_search), requires_grad=False).cuda(), 
+      dist_n_search.cuda(), 
+      Variable(torch.from_numpy(labels_n_search), requires_grad=False).cuda(), 
+    lr, optimizer, unrolled=args.unrolled)
 
     loss_p = criterion(dist_p, torch.from_numpy(labels_p).cuda())
     loss_n = criterion(dist_n, torch.from_numpy(labels_n).cuda())

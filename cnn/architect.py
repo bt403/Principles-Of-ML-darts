@@ -21,8 +21,6 @@ class Architect(object):
     loss_p = self.model._loss(input_p, target_p)
     loss_n = self.model._loss(input_n, target_n)
     loss = loss_p + loss_n
-    print("losss")
-    print(loss)
     theta = _concat(self.model.parameters()).data
     try:
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)
@@ -51,7 +49,8 @@ class Architect(object):
     unrolled_loss_p = unrolled_model._loss(input_valid_p, target_valid_p)
     unrolled_loss_n = unrolled_model._loss(input_valid_n, target_valid_n)
     unrolled_loss = unrolled_loss_n + unrolled_loss_p
-
+    print("loss222")
+    print(unrolled_loss)
     unrolled_loss.backward()
     print("-----")
     for v in unrolled_model.arch_parameters():

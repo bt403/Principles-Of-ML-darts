@@ -189,7 +189,15 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p
 
+    print("ALPHAS BEFORE")
+    print(F.softmax(model.alphas_normal, dim=-1))
+    print(F.softmax(model.alphas_reduce, dim=-1))
+
     loss.backward()
+
+    print("ALPHAS AFTER")
+    print(F.softmax(model.alphas_normal, dim=-1))
+    print(F.softmax(model.alphas_reduce, dim=-1))
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 

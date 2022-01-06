@@ -37,6 +37,8 @@ class Architect(object):
     self.optimizer.zero_grad()
     if unrolled:
         self._backward_step_unrolled(anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
+        print("ALPHAS after backward step unrolled ")
+        print(F.softmax(self.model.alphas_normal, dim=-1))
     else:
         self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     self.optimizer.step()
@@ -73,6 +75,8 @@ class Architect(object):
         v.grad = Variable(g.data)
       else:
         v.grad.data.copy_(g.data)
+    print("ALPHAS after for loop")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
 
   def _construct_model_from_theta(self, theta):
     model_new = self.model.new()

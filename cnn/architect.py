@@ -91,9 +91,9 @@ class Architect(object):
       print("type v")
       print(type(v))
       print(v.shape)
-      #p.data.add_(R, v)
-      p.data.add_(R)
-      p.data.add_(v)
+      p.data.add_(R, v)
+      #p.data.add_(R)
+      #p.data.add_(v)
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 

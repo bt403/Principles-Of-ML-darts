@@ -14,7 +14,7 @@ class FaceDataset(torch.utils.data.Dataset):
     self.in_path_td = in_path_td #
     self.img_size = img_size # (180, 180)
     self.transform = transforms.Compose([
-     transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))
+     transforms.Normalize((0.5),(0.5))
    ])
     
     self.labels = []

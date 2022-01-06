@@ -160,8 +160,6 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     #input_search = Variable(input_search, requires_grad=False).cuda()
     #target_search = Variable(target_search, requires_grad=False).cuda(non_blocking=True)
 
-    optimizer.zero_grad()
-
     anchor_out = model(anchor_img.cuda())
     positive_out = model(positive_img.cuda())
     negative_out = model(negative_img.cuda())
@@ -201,6 +199,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
       dist_n_search, labels_n_search, 
     lr, optimizer, unrolled=args.unrolled)
 
+    optimizer.zero_grad()
+    
     loss_p = criterion(dist_p, labels_p)
     loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p

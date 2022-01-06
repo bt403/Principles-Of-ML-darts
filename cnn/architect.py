@@ -57,18 +57,11 @@ class Architect(object):
     print("-----")
     for v in unrolled_model.arch_parameters():
       print(v.grad)
-
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     print("-----")
     #for v in unrolled_model.parameters():
       #print(v.grad)
-    #vector = [v.grad.data for v in unrolled_model.parameters()]
-    vector = []
-    for v in unrolled_model.parameters():
-      if (v.grad):
-        print("v grad data")
-        print(v.grad.data)
-        vector.push(v.grad.data)
+    vector = [v.grad.data for v in unrolled_model.parameters()]
     implicit_grads = self._hessian_vector_product(vector, input_train_p, target_train_p, input_train_n, target_train_n)
 
     for g, ig in zip(dalpha, implicit_grads):

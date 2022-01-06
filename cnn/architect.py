@@ -79,7 +79,7 @@ class Architect(object):
     model_new.load_state_dict(model_dict)
     return model_new.cuda()
 
-  def _hessian_vector_product(self, vector, input_p, target_p, input_n, target_n, r=1e-2):
+  def _hessian_vector_product(self, vector, anchor_img, positive_img, negative_img, labels_p, labels_n, r=1e-2):
     R = r / _concat(vector).norm()
     print(vector)
     for p, v in zip(self.model.parameters(), vector):
@@ -95,16 +95,12 @@ class Architect(object):
       #p.data.add_(R, v)
       p.data.add_(R)
       p.data.add_(v)
-    loss_p = self.model._loss(input_p, target_p)
-    loss_n = self.model._loss(input_n, target_n)
-    loss = loss_p + loss_n
+    loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):
       p.data.sub_(2*R, v)
-    loss_p = self.model._loss(input_p, target_p)
-    loss_n = self.model._loss(input_p, target_p)
-    loss = loss_p + loss_n
+    loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     grads_n = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):

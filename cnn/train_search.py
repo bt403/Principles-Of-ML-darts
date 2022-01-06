@@ -39,7 +39,7 @@ parser.add_argument('--seed', type=int, default=2, help='random seed')
 parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping')
 parser.add_argument('--train_portion', type=float, default=0.5, help='portion of training data')
 parser.add_argument('--unrolled', action='store_true', default=False, help='use one-step unrolled validation loss')
-parser.add_argument('--arch_learning_rate', type=float, default=0.0001, help='learning rate for arch encoding')
+parser.add_argument('--arch_learning_rate', type=float, default=1e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
 
@@ -162,9 +162,9 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     positive_img = Variable(positive_img, requires_grad=False).cuda()
     negative_img = Variable(negative_img, requires_grad=False).cuda()
 
-    anchor_img_search = Variable(anchor_img, requires_grad=False).cuda()
-    positive_img_search = Variable(anchor_img, requires_grad=False).cuda()
-    negative_img_search = Variable(anchor_img, requires_grad=False).cuda()
+    anchor_img_search = Variable(anchor_img_search, requires_grad=False).cuda()
+    positive_img_search = Variable(positive_img_search, requires_grad=False).cuda()
+    negative_img_search = Variable(negative_img_search, requires_grad=False).cuda()
 
     labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
     labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)

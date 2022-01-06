@@ -33,8 +33,7 @@ class Architect(object):
     unrolled_model = self._construct_model_from_theta(theta.sub(eta, moment+dtheta))
     return unrolled_model
 
-  def step(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
-      anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search,  eta, network_optimizer, unrolled):
+  def step(self, anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search,  eta, network_optimizer, unrolled):
     self.optimizer.zero_grad()
     if unrolled:
         self._backward_step_unrolled(anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
@@ -51,8 +50,7 @@ class Architect(object):
     print("loss 4")
     loss.backward()
 
-  def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
-      anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
+  def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
     unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     print("loss 5")

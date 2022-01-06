@@ -21,8 +21,6 @@ class Architect(object):
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     theta = _concat(self.model.parameters()).data
     try:
-      #for v in self.model.parameters():
-      #  print(network_optimizer.state[v])
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)
     except Exception as e:
       print("except")

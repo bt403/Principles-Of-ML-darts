@@ -111,7 +111,7 @@ class Network(nn.Module):
       s0, s1 = s1, cell(s0, s1, weights)
     out = self.global_pooling(s1)
     logits = self.classifier(out.view(out.size(0),-1))
-    return logits
+    return F.normalize(logits, p=2, dim=-1)
 
   def _loss(self, anchor_img, positive_img, negative_img, labels_p, labels_n):
     #logits = self(input)

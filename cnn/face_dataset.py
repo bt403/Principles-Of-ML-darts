@@ -54,7 +54,7 @@ class FaceDataset(torch.utils.data.Dataset):
           index = random.randrange(len(self.data))
 
       positive_item = random.choice(positive_list)
-      positive_img = Image.open(positive_item[0]).convert('RGB')
+      positive_img = Image.open(positive_item[0]).convert('RGB').convert('L')
 
       negative_list = self.data[mask]
       negative_list = negative_list[negative_list[:,1]!=anchor_label]
@@ -78,9 +78,9 @@ class FaceDataset(torch.utils.data.Dataset):
       anchor_img = anchor_img.crop(box)
       anchor_img = anchor_img.resize(self.img_size)
 
-      anchor_img_t = transforms.ToTensor()(numpy.array(anchor_img))
-      positive_img_t = transforms.ToTensor()(numpy.array(positive_img))
-      negative_img_t = transforms.ToTensor()(numpy.array(negative_img))
+      anchor_img_t = transforms.ToTensor()(numpy.array(anchor_img.convert('L')))
+      positive_img_t = transforms.ToTensor()(numpy.array(positive_img.convert('L')))
+      negative_img_t = transforms.ToTensor()(numpy.array(negative_img.convert('L')))
       return self.transform(anchor_img_t),  self.transform(positive_img_t),  self.transform(negative_img_t), anchor_label, negative_item[1]
 
 

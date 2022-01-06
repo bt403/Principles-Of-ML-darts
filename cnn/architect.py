@@ -62,6 +62,8 @@ class Architect(object):
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     vector = [v.grad.data for v in unrolled_model.parameters()]
     implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
+    print("ALPHAS after hessian")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
 
     for g, ig in zip(dalpha, implicit_grads):
       g.data.sub_(eta, ig.data)

@@ -153,22 +153,22 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
   top5 = utils.AvgrageMeter()
 
   for step, data in enumerate(train_queue):
-
-
     model.train()
-    #n = input.size(0)
-    #b_size = data[0].shape[0]
 
-    anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0].cuda(), data[1].cuda(), data[2].cuda(), data[3], data[4]
+    anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
     anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(train_queue))
     #input_search = Variable(input_search, requires_grad=False).cuda()
     #target_search = Variable(target_search, requires_grad=False).cuda(non_blocking=True)
 
     optimizer.zero_grad()
 
-    anchor_out = model(anchor_img)
-    positive_out = model(positive_img)
-    negative_out = model(negative_img)
+    anchor_out = model(anchor_img.cuda())
+    positive_out = model(positive_img.cuda())
+    negative_out = model(negative_img.cuda())
+
+    anchor_out.retain_grad()
+    positive_out.retain_grad()
+    negative_out.retain_grad()
 
     dist_p = (positive_out - anchor_out).pow(2).sum(1)
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
@@ -178,6 +178,10 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     anchor_out_search = model(anchor_img_search.cuda())
     positive_out_search = model(positive_img_search.cuda())
     negative_out_search = model(negative_img_search.cuda())
+
+    anchor_out_search.retain_grad()
+    positive_out_search.retain_grad()
+    negative_out_search.retain_grad()
 
     dist_p_search = (positive_out_search - anchor_out_search).pow(2).sum(1)
     dist_n_search = (negative_out_search - anchor_out_search).pow(2).sum(1)
@@ -197,8 +201,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
       dist_n_search, labels_n_search, 
     lr, optimizer, unrolled=args.unrolled)
 
-    loss_p = criterion(dist_p, torch.from_numpy(labels_p).cuda())
-    loss_n = criterion(dist_n, torch.from_numpy(labels_n).cuda())
+    loss_p = criterion(dist_p, labels_p)
+    loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p
 
     loss.backward()

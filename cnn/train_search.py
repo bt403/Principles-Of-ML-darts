@@ -173,10 +173,10 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     positive_out_search = model(positive_img_search)
     negative_out_search = model(negative_img_search)
 
-    labels_p = Variable(torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)), requires_grad=False).cuda()
-    labels_n = Variable(torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)), requires_grad=False).cuda()
-    labels_p_search = Variable(torch.from_numpy(np.zeros((1, positive_out_search.shape[0]), dtype=None)), requires_grad=False).cuda()
-    labels_n_search = Variable(torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None)), requires_grad=False).cuda()
+    labels_p = Variable(torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_n = Variable(torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_p_search = Variable(torch.from_numpy(np.zeros((1, positive_out_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_n_search = Variable(torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
     with torch.autograd.set_detect_anomaly(True):

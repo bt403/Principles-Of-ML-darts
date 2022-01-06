@@ -19,7 +19,6 @@ class Architect(object):
 
   def _compute_unrolled_model(self, anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer):
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
-    print("loss 3")
     theta = _concat(self.model.parameters()).data
     try:
       #for v in self.model.parameters():
@@ -39,28 +38,21 @@ class Architect(object):
         self._backward_step_unrolled(anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
     else:
         self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
-    print("printing params")
-    #for data in self.model.parameters():
-      #print(data.grad)
     self.optimizer.step()
 
 
   def _backward_step(self, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search):
     loss = self.model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
-    print("loss 4")
     loss.backward()
 
   def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
     unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
-    print("loss 5")
     unrolled_loss.backward()
 
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     vector = [v.grad.data for v in unrolled_model.parameters()]
     implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
-    print("implicit grads")
-    print(implicit_grads)
     for g, ig in zip(dalpha, implicit_grads):
       g.data.sub_(eta, ig.data)
 
@@ -89,16 +81,14 @@ class Architect(object):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
       p.data.add_(R, v)
+    
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
-    print("losss 1")
-    print(loss)
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):
       p.data.sub_(2*R, v)
+
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
-    print("losss 2")
-    print(loss)
     grads_n = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):

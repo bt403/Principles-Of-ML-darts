@@ -170,21 +170,10 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     positive_img_search = Variable(anchor_img, requires_grad=False).cuda()
     negative_img_search = Variable(anchor_img, requires_grad=False).cuda()
 
-    anchor_out = model(anchor_img)
-    positive_out = model(positive_img)
-    negative_out = model(negative_img)
-    positive_out_search = model(positive_img_search)
-    negative_out_search = model(negative_img_search)
-
-    print("positive out shape")
-    print(positive_out.shape)
-    print("negative out shape")
-    print(negative_out.shape)
-    print(positive_img.shape)
-    labels_p = Variable(torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
-    labels_n = Variable(torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
-    labels_p_search = Variable(torch.from_numpy(np.zeros((1, positive_out_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
-    labels_n_search = Variable(torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_p = Variable(torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_n = Variable(torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_p_search = Variable(torch.from_numpy(np.zeros((1, positive_img_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_n_search = Variable(torch.from_numpy(np.zeros((1, negative_img_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
     #with torch.autograd.set_detect_anomaly(True):
@@ -193,14 +182,17 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     optimizer.zero_grad()
 
+    anchor_out = model(anchor_img)
+    positive_out = model(positive_img)
+    negative_out = model(negative_img)
 
     dist_p = (positive_out - anchor_out).pow(2).sum(1)
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
-    #loss_p = criterion(dist_p, labels_p)
-    #loss_n = criterion(dist_n, labels_n)
-    #loss = loss_n + loss_p
+    loss_p = criterion(dist_p, labels_p)
+    loss_n = criterion(dist_n, labels_n)
+    loss = loss_n + loss_p
 
-    #loss.backward()
+    loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 

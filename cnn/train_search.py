@@ -201,7 +201,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     
   return accuracy.avg, objs.avg
 
-    '''input = Variable(input, requires_grad=False).cuda()
+  '''input = Variable(input, requires_grad=False).cuda()
     target = Variable(target, requires_grad=False).cuda(non_blocking=True)
 
     # get a random minibatch from the search queue with replacement

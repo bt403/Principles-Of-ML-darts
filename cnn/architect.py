@@ -82,15 +82,6 @@ class Architect(object):
   def _hessian_vector_product(self, vector, anchor_img, positive_img, negative_img, labels_p, labels_n, r=1e-2):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
-      print("data")
-      print(type(p.data))
-      print(p.data.shape)
-      print("type r")
-      print(type(R))
-      print(R.shape)
-      print("type v")
-      print(type(v))
-      print(v.shape)
       p.data.add_(R, v)
       #p.data.add_(R)
       #p.data.add_(v)

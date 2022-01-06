@@ -36,6 +36,21 @@ def accuracy(output, target, topk=(1,)):
     res.append(correct_k.mul_(100.0/batch_size))
   return res
 
+def accuracy_face(dist_p, dist_n, threshold):
+  
+  total = dist_p.shape[0] + dist_n.shape[0]
+  print("total")
+  print(total)
+  true_positives = (dist_p < threshold).sum()
+  print("true positives")
+  print(true_positives)
+  true_negatives = (dist_p >= threshold).sum()
+  print("true negatives")
+  print(true_negatives)
+  accuracy = (true_positives + true_negatives)/total
+  print("Accuracy : " + str(accuracy))
+  return accuracy
+
 
 class Cutout(object):
     def __init__(self, length):

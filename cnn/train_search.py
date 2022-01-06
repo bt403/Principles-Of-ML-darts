@@ -55,6 +55,7 @@ logging.getLogger().addHandler(fh)
 
 
 output_dimension = 128
+threshold = 0.5
 
 class ContrastiveLoss(torch.nn.Module):
     """
@@ -149,11 +150,11 @@ def main():
 
 def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
   objs = utils.AvgrageMeter()
-  top1 = utils.AvgrageMeter()
-  top5 = utils.AvgrageMeter()
+  accuracy = utils.AvgrageMeter()
 
   for step, data in enumerate(train_queue):
     model.train()
+    n =  args.batch_size
 
     anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
     anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(valid_queue))
@@ -187,26 +188,18 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     loss = loss_n + loss_p
 
     loss.backward()
-
-    print("ALPHAS AFTER")
-    print(F.softmax(model.alphas_normal, dim=-1))
-    print(F.softmax(model.alphas_reduce, dim=-1))
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    '''prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+    prec = utils.accuracy_face(dist_p, dist_n, threshold)
     objs.update(loss.data.item(), n)
-    top1.update(prec1.data.item(), n)
-    top5.update(prec5.data.item(), n)
+    accuracy.update(prec, n)
+    #top5.update(prec5.data.item(), n)
 
     if step % args.report_freq == 0:
-      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)'''
+      logging.info('train %03d %e %f', step, objs.avg, accuracy.avg)
     
-    return top1.avg, objs.avg
-
-
-
-
+    return accuracy.avg, objs.avg
 
     '''input = Variable(input, requires_grad=False).cuda()
     target = Variable(target, requires_grad=False).cuda(non_blocking=True)

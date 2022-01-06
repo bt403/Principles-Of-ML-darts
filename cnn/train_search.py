@@ -21,7 +21,7 @@ from architect import Architect
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size')
-parser.add_argument('--learning_rate', type=float, default=0.025, help='init learning rate')
+parser.add_argument('--learning_rate', type=float, default=0.00025, help='init learning rate')
 parser.add_argument('--learning_rate_min', type=float, default=0.001, help='min learning rate')
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
@@ -157,8 +157,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
     anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(train_queue))
-    #input_search = Variable(input_search, requires_grad=False).cuda()
-    #target_search = Variable(target_search, requires_grad=False).cuda(non_blocking=True)
+
     anchor_img = Variable(anchor_img, requires_grad=False).cuda()
     positive_img = Variable(positive_img, requires_grad=False).cuda()
     negative_img = Variable(negative_img, requires_grad=False).cuda()
@@ -167,10 +166,10 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     positive_img_search = Variable(anchor_img, requires_grad=False).cuda()
     negative_img_search = Variable(anchor_img, requires_grad=False).cuda()
 
-    labels_p = Variable(torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
-    labels_n = Variable(torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
-    labels_p_search = Variable(torch.from_numpy(np.zeros((1, positive_img_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
-    labels_n_search = Variable(torch.from_numpy(np.zeros((1, negative_img_search.shape[0]), dtype=None)), requires_grad=False).cuda(non_blocking=True)
+    labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+    labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+    labels_p_search = torch.from_numpy(np.zeros((1, positive_img_search.shape[0]), dtype=None)).cuda(non_blocking=True)
+    labels_n_search = torch.from_numpy(np.zeros((1, negative_img_search.shape[0]), dtype=None)).cuda(non_blocking=True)
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
     #with torch.autograd.set_detect_anomaly(True):
@@ -189,8 +188,6 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     loss_p = criterion(dist_p, labels_p)
     loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p
-
-   
 
     loss.backward()
 

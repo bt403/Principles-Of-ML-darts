@@ -117,6 +117,10 @@ class Network(nn.Module):
     #logits = self(input)
     #return self._criterion(logits, target) 
     anchor_out = self(anchor_img)
+    print("anchor_img")
+    print(anchor_img)
+    print("anchor out")
+    print(anchor_out)
     positive_out = self(positive_img)
     negative_out = self(negative_img)
 

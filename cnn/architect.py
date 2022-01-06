@@ -18,6 +18,7 @@ class Architect(object):
         lr=args.arch_learning_rate, betas=(0.5, 0.999), weight_decay=args.arch_weight_decay)
 
   def _compute_unrolled_model(self, anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer):
+    print("loss 1")
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     theta = _concat(self.model.parameters()).data
     try:
@@ -42,12 +43,14 @@ class Architect(object):
     self.optimizer.step()
 
   def _backward_step(self, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search):
+    print("loss 2")
     loss = self.model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     loss.backward()
 
   def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
       anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
     unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
+    print("loss 3")
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     unrolled_loss.backward()
 
@@ -85,11 +88,13 @@ class Architect(object):
       p.data.add_(R, v)
       #p.data.add_(R)
       #p.data.add_(v)
+    print("loss 4")
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):
       p.data.sub_(2*R, v)
+    print("loss 5")
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
     grads_n = torch.autograd.grad(loss, self.model.arch_parameters())
 

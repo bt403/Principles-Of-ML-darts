@@ -49,8 +49,6 @@ class Architect(object):
     unrolled_loss_p = unrolled_model._loss(input_valid_p, target_valid_p)
     unrolled_loss_n = unrolled_model._loss(input_valid_n, target_valid_n)
     unrolled_loss = unrolled_loss_n + unrolled_loss_p
-    print("loss222")
-    print(unrolled_loss)
     unrolled_loss.backward()
     print("-----")
     for v in unrolled_model.arch_parameters():

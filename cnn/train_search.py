@@ -172,8 +172,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     dist_p = (positive_out - anchor_out).pow(2).sum(1)
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
-    labels_p = np.ones((1, positive_out.shape[0]), dtype=None)
-    labels_n = np.zeros((1, negative_out.shape[0]), dtype=None)
+    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None))
+    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None))
     
     anchor_out_search = model(anchor_img_search.cuda())
     positive_out_search = model(positive_img_search.cuda())
@@ -181,8 +181,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     dist_p_search = (positive_out_search - anchor_out_search).pow(2).sum(1)
     dist_n_search = (negative_out_search - anchor_out_search).pow(2).sum(1)
-    labels_p_search = np.ones((1, positive_out_search.shape[0]), dtype=None)
-    labels_n_search = np.zeros((1, negative_out_search.shape[0]), dtype=None)
+    labels_p_search = torch.from_numpy(np.ones((1, positive_out_search.shape[0]), dtype=None))
+    labels_n_search = torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None))
 
     dist_p.retain_grad()
     dist_n.retain_grad()
@@ -191,14 +191,10 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
     architect.step(
-      dist_p.cuda(), 
-      Variable(torch.from_numpy(labels_p), requires_grad=False).cuda(), 
-      dist_n.cuda(), 
-      Variable(torch.from_numpy(labels_n), requires_grad=False).cuda(), 
-      dist_p_search.cuda(), 
-      Variable(torch.from_numpy(labels_p_search), requires_grad=False).cuda(), 
-      dist_n_search.cuda(), 
-      Variable(torch.from_numpy(labels_n_search), requires_grad=False).cuda(), 
+      dist_p, labels_p, 
+      dist_n, labels_n,
+      dist_p_search, labels_p_search,
+      dist_n_search, labels_n_search, 
     lr, optimizer, unrolled=args.unrolled)
 
     loss_p = criterion(dist_p, torch.from_numpy(labels_p).cuda())

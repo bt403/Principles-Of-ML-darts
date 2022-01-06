@@ -184,14 +184,19 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     labels_p_search = np.ones((1, positive_out_search.shape[0]), dtype=None)
     labels_n_search = np.zeros((1, negative_out_search.shape[0]), dtype=None)
 
+    dist_p.retain_grad()
+    dist_n.retain_grad()
+    dist_p_search.retain_grad()
+    dist_n_search.retain_grad()
+
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    architect.step(dist_p.retain_grad().cuda(), 
+    architect.step(dist_p.cuda(), 
     Variable(torch.from_numpy(labels_p)).cuda(), 
-    dist_n.retain_grad().cuda(), 
+    dist_n.cuda(), 
     Variable(torch.from_numpy(labels_n)).cuda(), 
-    dist_p_search.retain_grad().cuda(), 
+    dist_p_search.cuda(), 
     Variable(torch.from_numpy(labels_p_search)).cuda(), 
-    dist_n_search.retain_grad().cuda(), 
+    dist_n_search.cuda(), 
     Variable(torch.from_numpy(labels_n_search)).cuda(), lr, optimizer, unrolled=args.unrolled)
 
     loss_p = criterion(dist_p, torch.from_numpy(labels_p).cuda())

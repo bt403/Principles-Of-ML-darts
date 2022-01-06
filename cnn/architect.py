@@ -23,7 +23,8 @@ class Architect(object):
     loss = loss_p + loss_n
     theta = _concat(self.model.parameters()).data
     try:
-      print(network_optimizer.state[v])
+      for v in self.model.parameters():
+        print(network_optimizer.state[v])
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)
     except Exception as e:
       print("except")

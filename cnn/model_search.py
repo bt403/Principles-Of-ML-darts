@@ -120,9 +120,6 @@ class Network(nn.Module):
     positive_out = self(positive_img)
     negative_out = self(negative_img)
 
-    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)).cuda()
-    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)).cuda()
-
     dist_p = (positive_out - anchor_out).pow(2).sum(1)
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
 

@@ -191,9 +191,9 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     dist_p = (positive_out - anchor_out).pow(2).sum(1)
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
-    loss_p = criterion(dist_p, labels_p)
-    loss_n = criterion(dist_n, labels_n)
-    loss = loss_n + loss_p
+    #loss_p = criterion(dist_p, labels_p)
+    #loss_n = criterion(dist_n, labels_n)
+    #loss = loss_n + loss_p
 
     #loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)

@@ -114,11 +114,11 @@ def main():
       #pin_memory=True, num_workers=2)
   dataLoaderFace = DataLoaderFace(args.batch_size, 4)
   train_queue = dataLoaderFace.get_trainloader()
-
-  valid_queue = torch.utils.data.DataLoader(
-      train_data, batch_size=args.batch_size,
-      sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
-      pin_memory=True, num_workers=2)
+  valid_queue = dataLoaderFace.get_searchloader()
+  #valid_queue = torch.utils.data.DataLoader(
+  #    train_data, batch_size=args.batch_size,
+ #     sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
+  #    pin_memory=True, num_workers=2)
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, float(args.epochs), eta_min=args.learning_rate_min)
@@ -156,7 +156,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     model.train()
 
     anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
-    anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(train_queue))
+    anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(valid_queue))
 
     anchor_img = Variable(anchor_img, requires_grad=False).cuda()
     positive_img = Variable(positive_img, requires_grad=False).cuda()
@@ -171,9 +171,6 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     labels_p_search = torch.from_numpy(np.zeros((1, positive_img_search.shape[0]), dtype=None)).cuda(non_blocking=True)
     labels_n_search = torch.from_numpy(np.zeros((1, negative_img_search.shape[0]), dtype=None)).cuda(non_blocking=True)
 
-    #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    #with torch.autograd.set_detect_anomaly(True):
-    
     architect.step(anchor_img, positive_img, negative_img, labels_p, labels_n,
       anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, lr, optimizer, unrolled=args.unrolled)
 

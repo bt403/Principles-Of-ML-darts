@@ -80,7 +80,7 @@ class AuxiliaryHeadCIFAR(nn.Module):
 
   def forward(self, x):
     x = self.features(x)
-    x = self.classifier(x.view(x.size(0),-1))
+    x = F.normalize(self.classifier(x.view(x.size(0),-1)), p=2, dim=-1)
     return x
 
 

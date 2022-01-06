@@ -54,7 +54,7 @@ fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
 
-CIFAR_CLASSES = 10
+output_dimension = 128
 
 class ContrastiveLoss(torch.nn.Module):
     """
@@ -88,7 +88,7 @@ def main():
   #criterion = nn.CrossEntropyLoss()
   criterion = torch.jit.script(ContrastiveLoss())
   criterion = criterion.cuda()
-  model = Network(args.init_channels, CIFAR_CLASSES, args.layers, criterion)
+  model = Network(args.init_channels, output_dimension, args.layers, criterion)
   model = model.cuda()
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
 

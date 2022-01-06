@@ -172,8 +172,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     dist_p = (positive_out - anchor_out).pow(2).sum(1)
     dist_n = (negative_out - anchor_out).pow(2).sum(1)
-    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None))
-    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None))
+    labels_p = torch.from_numpy(np.ones((1, positive_out.shape[0]), dtype=None)).cuda()
+    labels_n = torch.from_numpy(np.zeros((1, negative_out.shape[0]), dtype=None)).cuda()
     
     anchor_out_search = model(anchor_img_search.cuda())
     positive_out_search = model(positive_img_search.cuda())
@@ -181,8 +181,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     dist_p_search = (positive_out_search - anchor_out_search).pow(2).sum(1)
     dist_n_search = (negative_out_search - anchor_out_search).pow(2).sum(1)
-    labels_p_search = torch.from_numpy(np.ones((1, positive_out_search.shape[0]), dtype=None))
-    labels_n_search = torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None))
+    labels_p_search = torch.from_numpy(np.ones((1, positive_out_search.shape[0]), dtype=None)).cuda()
+    labels_n_search = torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None)).cuda()
 
     dist_p.retain_grad()
     dist_n.retain_grad()

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 from torch.autograd import Variable
-
+import torch.nn.functional as F
 
 def _concat(xs):
   return torch.cat([x.view(-1) for x in xs])
@@ -43,13 +43,21 @@ class Architect(object):
 
   def _backward_step(self, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search):
     loss = self.model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
+    print("ALPHAS BEFORE backward")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
     loss.backward()
+    print("ALPHAS after backward")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
 
   def _backward_step_unrolled(self, anchor_img, positive_img, negative_img, labels_p, labels_n,
       anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer):
     unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
+    print("ALPHAS BEFORE unrolled backward")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
     unrolled_loss.backward()
+    print("ALPHAS after unrolled backward")
+    print(F.softmax(self.model.alphas_normal, dim=-1))
 
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     vector = [v.grad.data for v in unrolled_model.parameters()]

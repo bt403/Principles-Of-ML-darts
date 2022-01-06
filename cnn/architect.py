@@ -40,8 +40,8 @@ class Architect(object):
     else:
         self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     print("printing params")
-    for data in self.model.parameters():
-      print(data.grad)
+    #for data in self.model.parameters():
+      #print(data.grad)
     self.optimizer.step()
 
 
@@ -57,6 +57,8 @@ class Architect(object):
 
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
     vector = [v.grad.data for v in unrolled_model.parameters()]
+    print("VECGTOR")
+    print(vector)
     implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
 
     for g, ig in zip(dalpha, implicit_grads):

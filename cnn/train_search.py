@@ -174,6 +174,9 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
     #with torch.autograd.set_detect_anomaly(True):
+    print("ALPHAS BEFORE")
+    print(F.softmax(model.alphas_normal, dim=-1))
+    print(F.softmax(model.alphas_reduce, dim=-1))
     architect.step(anchor_img, positive_img, negative_img, labels_p, labels_n,
       anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, lr, optimizer, unrolled=args.unrolled)
 
@@ -189,9 +192,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     loss_n = criterion(dist_n, labels_n)
     loss = loss_n + loss_p
 
-    print("ALPHAS BEFORE")
-    print(F.softmax(model.alphas_normal, dim=-1))
-    print(F.softmax(model.alphas_reduce, dim=-1))
+   
 
     loss.backward()
 

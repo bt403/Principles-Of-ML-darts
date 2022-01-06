@@ -105,7 +105,7 @@ class AuxiliaryHeadImageNet(nn.Module):
 
   def forward(self, x):
     x = self.features(x)
-    x = self.classifier(x.view(x.size(0),-1))
+    x = F.normalize(self.classifier(x.view(x.size(0),-1)), p=2, dim=-1)
     return x
 
 
@@ -157,7 +157,7 @@ class NetworkCIFAR(nn.Module):
     return logits, logits_aux
 
 
-class NetworkImageNet(nn.Module):
+'''class NetworkImageNet(nn.Module):
 
   def __init__(self, C, num_classes, layers, auxiliary, genotype):
     super(NetworkImageNet, self).__init__()
@@ -212,4 +212,4 @@ class NetworkImageNet(nn.Module):
     out = self.global_pooling(s1)
     logits = self.classifier(out.view(out.size(0), -1))
     return logits, logits_aux
-
+'''

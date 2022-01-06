@@ -179,7 +179,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     labels_n_search = torch.from_numpy(np.zeros((1, negative_out_search.shape[0]), dtype=None)).cuda()
 
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-    architect.step(anchor_img.cuda(), positive_img.cuda(), negative_img.cuda(), labels_p, labels_n,
+    with torch.autograd.set_detect_anomaly(True):
+      architect.step(anchor_img.cuda(), positive_img.cuda(), negative_img.cuda(), labels_p, labels_n,
       anchor_img_search.cuda(), positive_img_search.cuda(), negative_img_search.cuda(), labels_p_search, labels_n_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()

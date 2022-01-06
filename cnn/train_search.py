@@ -54,7 +54,7 @@ fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
 
-output_dimension = 128
+output_dimension = 32
 threshold = 0.5
 
 class ContrastiveLoss(torch.nn.Module):

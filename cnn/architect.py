@@ -50,13 +50,8 @@ class Architect(object):
     unrolled_model = self._compute_unrolled_model(anchor_img, positive_img, negative_img, labels_p, labels_n, eta, network_optimizer)
     unrolled_loss = unrolled_model._loss(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
     unrolled_loss.backward()
-    print("-----")
-    for v in unrolled_model.arch_parameters():
-      print(v.grad)
+
     dalpha = [v.grad for v in unrolled_model.arch_parameters()]
-    print("-----")
-    #for v in unrolled_model.parameters():
-      #print(v.grad)
     vector = [v.grad.data for v in unrolled_model.parameters()]
     implicit_grads = self._hessian_vector_product(vector, anchor_img, positive_img, negative_img, labels_p, labels_n)
 
@@ -87,6 +82,10 @@ class Architect(object):
   def _hessian_vector_product(self, vector, input_p, target_p, input_n, target_n, r=1e-2):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
+      print("RRRRR")
+      print(R)
+      print("vvvv------------")
+      print(v)
       p.data.add_(R, v)
     loss_p = self.model._loss(input_p, target_p)
     loss_n = self.model._loss(input_n, target_n)

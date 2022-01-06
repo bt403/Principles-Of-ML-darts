@@ -22,13 +22,11 @@ class Architect(object):
     loss_n = self.model._loss(input_n, target_n)
     loss = loss_p + loss_n
     theta = _concat(self.model.parameters()).data
-    print("-----22222")
-    for v in self.model.parameters():
-      print(v.grad)
     try:
       moment = _concat(network_optimizer.state[v]['momentum_buffer'] for v in self.model.parameters()).mul_(self.network_momentum)
-    except:
+    except Exception as e:
       print("except")
+      print(repr(e))
       moment = torch.zeros_like(theta)
     dtheta = _concat(torch.autograd.grad(loss, self.model.parameters())).data + self.network_weight_decay*theta
     unrolled_model = self._construct_model_from_theta(theta.sub(eta, moment+dtheta))

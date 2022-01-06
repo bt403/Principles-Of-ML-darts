@@ -82,10 +82,7 @@ class Architect(object):
   def _hessian_vector_product(self, vector, input_p, target_p, input_n, target_n, r=1e-2):
     R = r / _concat(vector).norm()
     for p, v in zip(self.model.parameters(), vector):
-      print("RRRRR")
-      print(R)
-      print("vvvv------------")
-      print(v)
+      print(p.data)
       p.data.add_(R, v)
     loss_p = self.model._loss(input_p, target_p)
     loss_n = self.model._loss(input_n, target_n)

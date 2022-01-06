@@ -90,11 +90,15 @@ class Architect(object):
       p.data.add_(R, v)
 
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
+    print("losss 1")
+    print(loss)
     grads_p = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):
       p.data.sub_(2*R, v)
     loss = self.model._loss(anchor_img, positive_img, negative_img, labels_p, labels_n)
+    print("losss 2")
+    print(loss)
     grads_n = torch.autograd.grad(loss, self.model.arch_parameters())
 
     for p, v in zip(self.model.parameters(), vector):

@@ -37,18 +37,9 @@ def accuracy(output, target, topk=(1,)):
   return res
 
 def accuracy_face(dist_p, dist_n, threshold):
-  
   total = dist_p.shape[0] + dist_n.shape[0]
-  print("total")
-  print(total)
-  print(dist_p)
-  print(dist_n)
   true_positives = (dist_p < threshold).sum()
-  print("true positives")
-  print(true_positives)
-  true_negatives = (dist_p >= threshold).sum()
-  print("true negatives")
-  print(true_negatives)
+  true_negatives = (dist_n >= threshold).sum()
   accuracy = (true_positives + true_negatives)/total
   print("Accuracy : " + str(accuracy))
   return accuracy

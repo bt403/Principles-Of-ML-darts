@@ -41,6 +41,8 @@ class FaceDataset(torch.utils.data.Dataset):
 
   def __len__(self):
     if (self.mode == "train"):
+      print("length train")
+      print(len(self.imgs_path))
       return len(self.imgs_path)
     else:
       return len(self.imgs_path_val)

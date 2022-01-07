@@ -138,12 +138,12 @@ def main():
     print(F.softmax(model.alphas_reduce, dim=-1))
 
     # training
-    train_acc, train_obj = train(train_queue, valid_queue, model, architect, criterion, optimizer, lr)
-    logging.info('train_acc %f', train_acc)
+    #train_acc, train_obj = train(train_queue, valid_queue, model, architect, criterion, optimizer, lr)
+    #logging.info('train_acc %f', train_acc)
 
     # validation
-    #valid_acc, valid_obj = infer(valid_queue, model, criterion)
-    #logging.info('valid_acc %f', valid_acc)
+    valid_acc, valid_obj = infer(valid_queue, model, criterion)
+    logging.info('valid_acc %f', valid_acc)
 
     utils.save(model, os.path.join(args.save, 'weights.pt'))
 
@@ -154,7 +154,6 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
   for step, data in enumerate(train_queue):
     model.train()
-    n =  args.batch_size
 
     anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
     anchor_img_search , positive_img_search , negative_img_search , anchor_label_search , negative_label_search = next(iter(valid_queue))
@@ -162,6 +161,8 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     anchor_img = Variable(anchor_img, requires_grad=False).cuda()
     positive_img = Variable(positive_img, requires_grad=False).cuda()
     negative_img = Variable(negative_img, requires_grad=False).cuda()
+
+    n = positive_img.shape[0]
 
     anchor_img_search = Variable(anchor_img_search, requires_grad=False).cuda()
     positive_img_search = Variable(positive_img_search, requires_grad=False).cuda()
@@ -204,43 +205,41 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     
   return accuracy.avg, objs.avg
 
-  '''input = Variable(input, requires_grad=False).cuda()
-    target = Variable(target, requires_grad=False).cuda(non_blocking=True)
-
-    # get a random minibatch from the search queue with replacement
-    input_search, target_search = next(iter(valid_queue))
-    input_search = Variable(input_search, requires_grad=False).cuda()
-    target_search = Variable(target_search, requires_grad=False).cuda(non_blocking=True)
-
-    architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-
-    optimizer.zero_grad()
-    logits = model(input)
-    loss = criterion(logits, target)
-
-    loss.backward()
-    nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
-    optimizer.step()
-
-    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
-    objs.update(loss.data.item(), n)
-    top1.update(prec1.data.item(), n)
-    top5.update(prec5.data.item(), n)
-
-    if step % args.report_freq == 0:
-      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
-
-  return top1.avg, objs.avg'''
-
-
 def infer(valid_queue, model, criterion):
   objs = utils.AvgrageMeter()
-  top1 = utils.AvgrageMeter()
-  top5 = utils.AvgrageMeter()
+  accuracy = utils.AvgrageMeter()
   model.eval()
 
-  for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True).cuda()
+  for step, data in enumerate(valid_queue):
+    anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
+    anchor_img = Variable(anchor_img, requires_grad=False).cuda()
+    positive_img = Variable(positive_img, requires_grad=False).cuda()
+    negative_img = Variable(negative_img, requires_grad=False).cuda()
+
+    n = positive_img.shape[0]
+
+    labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+    labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+
+    anchor_out = model(anchor_img)
+    positive_out = model(positive_img)
+    negative_out = model(negative_img)
+
+    dist_p = (positive_out - anchor_out).pow(2).sum(1)
+    dist_n = (negative_out - anchor_out).pow(2).sum(1)
+    loss_p = criterion(dist_p, labels_p)
+    loss_n = criterion(dist_n, labels_n)
+    loss = loss_n + loss_p
+
+    prec = utils.accuracy_face(dist_p, dist_n, threshold)
+    objs.update(loss.data.item(), n)
+    accuracy.update(prec, n)
+
+    if step % args.report_freq == 0:
+      logging.info('valid %03d %f %f', step, objs.avg, accuracy.avg)
+
+
+    '''input = Variable(input, volatile=True).cuda()
     target = Variable(target, volatile=True).cuda(non_blocking=True)
 
     logits = model(input)
@@ -253,9 +252,9 @@ def infer(valid_queue, model, criterion):
     top5.update(prec5.data.item(), n)
 
     if step % args.report_freq == 0:
-      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)'''
 
-  return top1.avg, objs.avg
+  return accuracy.avg, objs.avg
 
 
 if __name__ == '__main__':

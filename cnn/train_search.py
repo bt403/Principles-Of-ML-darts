@@ -113,7 +113,7 @@ def main():
       #train_data, batch_size=args.batch_size,
       #sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
       #pin_memory=True, num_workers=2)
-  dataLoaderFace = DataLoaderFace(args.batch_size, 4)
+  dataLoaderFace = DataLoaderFace(args.batch_size, workers=4)
   train_queue = dataLoaderFace.get_trainloader()
   valid_queue = dataLoaderFace.get_searchloader()
   #valid_queue = torch.utils.data.DataLoader(
@@ -237,22 +237,6 @@ def infer(valid_queue, model, criterion):
 
     if step % args.report_freq == 0:
       logging.info('valid %03d %f %f', step, objs.avg, accuracy.avg)
-
-
-    '''input = Variable(input, volatile=True).cuda()
-    target = Variable(target, volatile=True).cuda(non_blocking=True)
-
-    logits = model(input)
-    loss = criterion(logits, target)
-
-    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
-    n = input.size(0)
-    objs.update(loss.data.item(), n)
-    top1.update(prec1.data.item(), n)
-    top5.update(prec5.data.item(), n)
-
-    if step % args.report_freq == 0:
-      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)'''
 
   return accuracy.avg, objs.avg
 

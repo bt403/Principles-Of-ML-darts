@@ -45,6 +45,8 @@ class FaceDataset(torch.utils.data.Dataset):
       print(len(self.imgs_path))
       return len(self.imgs_path)
     else:
+      print("length val")
+      print(len(self.imgs_path_val))
       return len(self.imgs_path_val)
 
   def __getitem__(self, idx):

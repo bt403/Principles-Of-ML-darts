@@ -86,7 +86,6 @@ def main():
   logging.info('gpu device = %d' % args.gpu)
   logging.info("args = %s", args)
 
-  #criterion = nn.CrossEntropyLoss()
   criterion = torch.jit.script(ContrastiveLoss())
   criterion = criterion.cuda()
   model = Network(args.init_channels, output_dimension, args.layers, criterion)
@@ -100,26 +99,9 @@ def main():
       weight_decay=args.weight_decay)
 
   #optimizer = optim.Adam(face_model.parameters(), lr=0.0001)
-
-
-  train_transform, valid_transform = utils._data_transforms_cifar10(args)
-  train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
-
-  num_train = len(train_data)
-  indices = list(range(num_train))
-  split = int(np.floor(args.train_portion * num_train))
-
-  #train_queue = torch.utils.data.DataLoader(
-      #train_data, batch_size=args.batch_size,
-      #sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
-      #pin_memory=True, num_workers=2)
   dataLoaderFace = DataLoaderFace(args.batch_size, workers=4)
   train_queue = dataLoaderFace.get_trainloader()
   valid_queue = dataLoaderFace.get_searchloader()
-  #valid_queue = torch.utils.data.DataLoader(
-  #    train_data, batch_size=args.batch_size,
- #     sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
-  #    pin_memory=True, num_workers=2)
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, float(args.epochs), eta_min=args.learning_rate_min)

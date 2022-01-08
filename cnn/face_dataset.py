@@ -99,7 +99,7 @@ class FaceDataset(torch.utils.data.Dataset):
 
 dataset_dir = "./lfw_funneled"
 dataset_dir_td = "./TD_RGB"
-dataset_dir_ms1m = "./ms1m-retinaface-t1"
+dataset_dir_ms1m = "./ms1m-retinaface"
 
 class DataLoaderFace():
     def __init__(self, batch_size, workers):

@@ -7,7 +7,7 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 
 class FaceDataset(torch.utils.data.Dataset):
-  def __init__(self, in_path, mode='train', img_size=(48, 48)):
+  def __init__(self, in_path, mode='train', img_size=(56, 56)):
     super(FaceDataset, self).__init__()
 
     self.mode = mode #train or test

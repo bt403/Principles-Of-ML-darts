@@ -25,7 +25,7 @@ class FaceDataset(torch.utils.data.Dataset):
     for (dirpath, dirnames, filenames) in os.walk(self.in_path):
       for file in filenames:
         _, ext = os.path.splitext(file)
-        if ext == ".jpg":
+        if ext == ".jpeg":
           self.labels.append(os.path.basename(os.path.normpath(dirpath)))
           self.imgs_path.append(os.path.join(dirpath, file))
 

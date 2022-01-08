@@ -114,8 +114,6 @@ class Network(nn.Module):
     return F.normalize(logits, p=2, dim=-1)
 
   def _loss(self, anchor_img, positive_img, negative_img, labels_p, labels_n):
-    #logits = self(input)
-    #return self._criterion(logits, target) 
     anchor_out = self(anchor_img)
     positive_out = self(positive_img)
     negative_out = self(negative_img)

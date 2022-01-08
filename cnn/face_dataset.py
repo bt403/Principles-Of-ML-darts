@@ -4,6 +4,29 @@ import torch
 import numpy 
 import random
 from PIL import Image
+import mxnet as mx
+from mxnet import recordio
+
+class MS1MDataset(torch.utils.data.Dataset):
+    def __init__(self, mxnet_record = 'train.rec', mxnet_idx = 'train.idx'):
+        self.data = recordio.MXIndexedRecordIO(mxnet_idx, mxnet_record,'r')
+        self.transform = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                             transforms.ToTensor()
+                                             ])
+
+    def __len__(self):
+        return 3804846
+    
+    def __getitem__(self, index):
+        header, s = recordio.unpack(self.data.read_idx(index+1))
+        image = mx.image.imdecode(s).asnumpy()
+        label = int(header.label)
+        
+        image = self.transform(image)
+        
+        print("size")
+        print(image.shape)
+        return image, torch.tensor(label, dtype = torch.long)
 
 class FaceDataset(torch.utils.data.Dataset):
   def __init__(self, in_path, in_path_td, mode='train', img_size=(48, 48)):

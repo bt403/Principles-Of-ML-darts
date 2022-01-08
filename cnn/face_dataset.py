@@ -15,8 +15,8 @@ class FaceDataset(torch.utils.data.Dataset):
     self.img_size = img_size # (180, 180)
     self.transform = transforms.Compose([
      transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))
-   ])
-    
+    ])
+    print(self.in_path)
     self.labels = []
     self.imgs_path = []
     self.imgs_path_val = []
@@ -100,8 +100,8 @@ dataset_dir_ms1m = "./ms1m-retinaface"
 class DataLoaderFace():
     def __init__(self, batch_size, workers):
         super(DataLoaderFace, self).__init__()
-        self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, dataset_dir_td), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, dataset_dir_td, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
 
     def get_trainloader(self):
         return self.trainloader

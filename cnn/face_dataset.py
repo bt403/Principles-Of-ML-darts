@@ -122,14 +122,20 @@ class FaceDataset(torch.utils.data.Dataset):
 
 dataset_dir = "./lfw_funneled"
 dataset_dir_td = "./TD_RGB"
+dataset_dir_ms1m = "./ms1m-retinaface-t1"
+
 class DataLoaderFace():
     def __init__(self, batch_size, workers):
         super(DataLoaderFace, self).__init__()
         self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir, dataset_dir_td), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
         self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir, dataset_dir_td, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        
+        self.ms1mloader = torch.utils.data.DataLoader(MS1MDataset(dataset_dir_ms1m), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+
     def get_trainloader(self):
         return self.trainloader
 
     def get_searchloader(self):
         return self.searchloader
+
+    def get_ms1mloader(self):
+        return self.ms1mloader

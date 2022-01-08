@@ -4,37 +4,14 @@ import torch
 import numpy 
 import random
 from PIL import Image
-import mxnet as mx
-from mxnet import recordio
-
-class MS1MDataset(torch.utils.data.Dataset):
-    def __init__(self, mxnet_record = 'train.rec', mxnet_idx = 'train.idx'):
-        self.data = recordio.MXIndexedRecordIO(mxnet_idx, mxnet_record,'r')
-        self.transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                             transforms.ToTensor()
-                                             ])
-
-    def __len__(self):
-        return 3804846
-    
-    def __getitem__(self, index):
-        header, s = recordio.unpack(self.data.read_idx(index+1))
-        image = mx.image.imdecode(s).asnumpy()
-        label = int(header.label)
-        
-        image = self.transform(image)
-        
-        print("size")
-        print(image.shape)
-        return image, torch.tensor(label, dtype = torch.long)
 
 class FaceDataset(torch.utils.data.Dataset):
-  def __init__(self, in_path, in_path_td, mode='train', img_size=(48, 48)):
+  def __init__(self, in_path, in_path_val, mode='train', img_size=(48, 48)):
     super(FaceDataset, self).__init__()
 
     self.mode = mode #train or test
     self.in_path = in_path #
-    self.in_path_td = in_path_td #
+    self.in_path_td = in_path_val #
     self.img_size = img_size # (180, 180)
     self.transform = transforms.Compose([
      transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))
@@ -127,15 +104,11 @@ dataset_dir_ms1m = "./ms1m-retinaface-t1"
 class DataLoaderFace():
     def __init__(self, batch_size, workers):
         super(DataLoaderFace, self).__init__()
-        self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir, dataset_dir_td), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir, dataset_dir_td, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        self.ms1mloader = torch.utils.data.DataLoader(MS1MDataset(dataset_dir_ms1m), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, dataset_dir_td), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, dataset_dir_td, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
 
     def get_trainloader(self):
         return self.trainloader
 
     def get_searchloader(self):
         return self.searchloader
-
-    def get_ms1mloader(self):
-        return self.ms1mloader

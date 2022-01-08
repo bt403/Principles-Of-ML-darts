@@ -100,8 +100,8 @@ def main():
 
   #optimizer = optim.Adam(face_model.parameters(), lr=0.0001)
   dataLoaderFace = DataLoaderFace(args.batch_size, workers=4)
-  train_queue = dataLoaderFace.get_ms1mloader()
-  valid_queue = dataLoaderFace.get_ms1mloader()
+  train_queue = dataLoaderFace.get_trainloader()
+  valid_queue = dataLoaderFace.get_searchloader()
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, float(args.epochs), eta_min=args.learning_rate_min)

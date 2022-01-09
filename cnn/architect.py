@@ -36,7 +36,7 @@ class Architect(object):
         self._backward_step_unrolled(anchor_img, positive_img, negative_img, labels_p, labels_n, anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search, eta, network_optimizer)
     else:
         self._backward_step(anchor_img_search, positive_img_search, negative_img_search, labels_p_search, labels_n_search)
-    nn.utils.clip_grad_norm(self.model.parameters(), 5)
+    nn.utils.clip_grad_norm(self.model.parameters(), 25)
     self.optimizer.step()
 
 

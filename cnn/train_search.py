@@ -101,7 +101,8 @@ def main():
   #optimizer = optim.Adam(face_model.parameters(), lr=0.0001)
   dataLoaderFace = DataLoaderFace(args.batch_size, workers=4)
   train_queue = dataLoaderFace.get_trainloader()
-  valid_queue = dataLoaderFace.get_searchloader()
+  search_queue = dataLoaderFace.get_searchloader()
+  valid_queue = dataLoaderFace.get_valloader()
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, float(args.epochs), eta_min=args.learning_rate_min)
@@ -120,15 +121,15 @@ def main():
     print(F.softmax(model.alphas_reduce, dim=-1))
 
     # training
-    train_acc, train_obj = train(train_queue, valid_queue, model, architect, criterion, optimizer, lr)
-    logging.info('train_acc %f', train_acc)
+    #train_acc, train_obj = train(train_queue, search_queue, model, architect, criterion, optimizer, lr)
+    #logging.info('train_acc %f', train_acc)
 
     # validation
-    valid_acc, valid_obj = infer(valid_queue, model, criterion)
-    logging.info('valid_acc %f', valid_acc)
+    #valid_acc, valid_obj = infer(valid_queue, model, criterion)
+    #logging.info('valid_acc %f', valid_acc)
 
     utils.save(model, os.path.join(args.save, 'weights.pt'))
-
+    utils.save_checkpoint(model, os.path.join(args.save, '_checkpoint_weights' + str(epoch+1)+ '.tar'), epoch, optimizer)
 
 def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
   objs = utils.AvgrageMeter()

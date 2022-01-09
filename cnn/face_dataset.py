@@ -104,9 +104,13 @@ class DataLoaderFace():
         super(DataLoaderFace, self).__init__()
         self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
         self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.valloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val"), batch_size=4, shuffle=True, num_workers=workers, pin_memory=True)
 
     def get_trainloader(self):
         return self.trainloader
 
     def get_searchloader(self):
         return self.searchloader
+    
+    def get_valloader(self):
+        return self.valloader

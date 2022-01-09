@@ -7,7 +7,7 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 
 class FaceDataset(torch.utils.data.Dataset):
-  def __init__(self, in_path, mode='train', img_size=(56, 56)):
+  def __init__(self, in_path, limit=10000, mode='train', img_size=(56, 56)):
     super(FaceDataset, self).__init__()
 
     self.mode = mode #train or test
@@ -22,7 +22,7 @@ class FaceDataset(torch.utils.data.Dataset):
     self.imgs_path_val = []
     self.labels_val = []
     c = 0
-    limit = 10000
+    self.limit = limit
     for (dirpath, dirnames, filenames) in os.walk(self.in_path):
       for file in filenames:
         _, ext = os.path.splitext(file)
@@ -100,11 +100,11 @@ dataset_dir_td = "./TD_RGB"
 dataset_dir_ms1m = "./ms1m-retinaface"
 
 class DataLoaderFace():
-    def __init__(self, batch_size, workers):
+    def __init__(self, batch_size, workers, limit=10000):
         super(DataLoaderFace, self).__init__()
-        self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val"), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        self.valloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val"), batch_size=4, shuffle=True, num_workers=workers, pin_memory=True)
+        self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, limit=limit), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val", limit=limit), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.valloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val", limit=limit), batch_size=4, shuffle=True, num_workers=workers, pin_memory=True)
 
     def get_trainloader(self):
         return self.trainloader

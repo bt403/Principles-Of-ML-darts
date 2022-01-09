@@ -41,6 +41,7 @@ parser.add_argument('--train_portion', type=float, default=0.5, help='portion of
 parser.add_argument('--unrolled', action='store_true', default=False, help='use one-step unrolled validation loss')
 parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
+parser.add_argument('--sample_limit', type=int, default=10000, help='subsampling limit for search training')
 args = parser.parse_args()
 
 args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
@@ -105,7 +106,7 @@ def main():
       weight_decay=args.weight_decay)
 
   #optimizer = optim.Adam(face_model.parameters(), lr=0.0001)
-  dataLoaderFace = DataLoaderFace(args.batch_size, workers=4)
+  dataLoaderFace = DataLoaderFace(args.batch_size, workers=4, limit=args.sample_limit)
   train_queue = dataLoaderFace.get_trainloader()
   search_queue = dataLoaderFace.get_searchloader()
   valid_queue = dataLoaderFace.get_valloader()

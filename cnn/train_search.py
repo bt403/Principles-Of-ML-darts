@@ -89,11 +89,14 @@ def main():
   criterion = torch.jit.script(ContrastiveLoss())
   criterion = criterion.cuda()
   model = Network(args.init_channels, output_dimension, args.layers, criterion)
-  model = model.cuda()
+
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
   if (args.model_path != "saved_models"):
-    utils.load_checkpoint(model, args.model_path)
+    checkpoint = torch.load(args.model_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.set_alphas(checkpoint['alphas_normal'], checkpoint['alphas_reduce'])
   
+  model = model.cuda()
 
   optimizer = torch.optim.SGD(
       model.parameters(),
@@ -132,7 +135,7 @@ def main():
     logging.info('valid_acc %f', valid_acc)
 
     utils.save(model, os.path.join(args.save, 'weights.pt'))
-    utils.save_checkpoint(model, os.path.join(args.save, 'checkpoint_weights' + str(epoch+1)+ '.tar'), epoch, optimizer)
+    utils.save_checkpoint_search(model, os.path.join(args.save, 'checkpoint_weights' + str(epoch+1)+ '.tar'), epoch, optimizer)
 
 def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
   objs = utils.AvgrageMeter()

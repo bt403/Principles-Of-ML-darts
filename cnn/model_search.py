@@ -136,6 +136,13 @@ class Network(nn.Module):
       self.alphas_normal,
       self.alphas_reduce,
     ]
+  def set_alphas(self, alphas_normal, alphas_reduce):
+    self.alphas_normal = alphas_normal
+    self.alphas_reduce = alphas_reduce
+    self._arch_parameters = [
+      self.alphas_normal,
+      self.alphas_reduce,
+    ]
 
   def arch_parameters(self):
     return self._arch_parameters

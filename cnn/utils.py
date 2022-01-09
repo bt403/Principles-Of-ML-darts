@@ -102,20 +102,19 @@ def save_checkpoint(state, is_best, save):
 def save(model, model_path):
   torch.save(model.state_dict(), model_path)
 
-def save_checkpoint(model, checkpoint_path, epoch, optimizer):
+def save_checkpoint_search(model, checkpoint_path, epoch, optimizer):
   torch.save({
   'epoch': epoch,
   'model_state_dict': model.state_dict(),
   'optimizer_state_dict': optimizer.state_dict(),
+  'alphas_reduce': model.alphas_normal,
+  'alphas_normal': model.alphas_reduce,
+  'genotype': model.genotype(),
   }, checkpoint_path)
 
 
 def load(model, model_path):
   model.load_state_dict(torch.load(model_path))
-
-def load_checkpoint(model, model_path):
-  checkpoint = torch.load(model_path)
-  model.load_state_dict(checkpoint['model_state_dict'])
 
 def drop_path(x, drop_prob):
   if drop_prob > 0.:

@@ -22,7 +22,7 @@ class FaceDataset(torch.utils.data.Dataset):
     self.imgs_path_val = []
     self.labels_val = []
     c = 0
-    limit = 10000
+    limit = 12000
     for (dirpath, dirnames, filenames) in os.walk(self.in_path):
       for file in filenames:
         _, ext = os.path.splitext(file)
@@ -31,8 +31,8 @@ class FaceDataset(torch.utils.data.Dataset):
           self.imgs_path.append(os.path.join(dirpath, file))
           c = c+1
 
-    self.imgs_path ,self.imgs_path_val = train_test_split(self.imgs_path,test_size=0.3, random_state=42)
-    self.labels ,self.labels_val = train_test_split(self.labels,test_size=0.3, random_state=42)
+    self.imgs_path ,self.imgs_path_val = train_test_split(self.imgs_path,test_size=0.5, random_state=42)
+    self.labels ,self.labels_val = train_test_split(self.labels,test_size=0.5, random_state=42)
     
     self.data =  numpy.array(list(zip(self.imgs_path, self.labels)))
     self.data_val =  numpy.array(list(zip(self.imgs_path_val, self.labels_val)))

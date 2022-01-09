@@ -22,7 +22,7 @@ class FaceDataset(torch.utils.data.Dataset):
     self.imgs_path_val = []
     self.labels_val = []
     c = 0
-    limit = 12000
+    limit = 10000
     for (dirpath, dirnames, filenames) in os.walk(self.in_path):
       for file in filenames:
         _, ext = os.path.splitext(file)

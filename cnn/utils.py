@@ -102,7 +102,7 @@ def save_checkpoint(state, is_best, save):
 def save(model, model_path):
   torch.save(model.state_dict(), model_path)
 
-def save(model, checkpoint_path, epoch, optimizer):
+def save_checkpoint(model, checkpoint_path, epoch, optimizer):
   torch.save({
   'epoch': epoch,
   'model_state_dict': model.state_dict(),

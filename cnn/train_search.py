@@ -91,6 +91,9 @@ def main():
   model = Network(args.init_channels, output_dimension, args.layers, criterion)
   model = model.cuda()
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
+  if (args.model_path != "saved_models"):
+    utils.load_checkpoint(model, args.model_path)
+  
 
   optimizer = torch.optim.SGD(
       model.parameters(),

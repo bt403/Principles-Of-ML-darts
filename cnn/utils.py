@@ -113,6 +113,9 @@ def save_checkpoint(model, checkpoint_path, epoch, optimizer):
 def load(model, model_path):
   model.load_state_dict(torch.load(model_path))
 
+def load_checkpoint(model, model_path):
+  checkpoint = torch.load(model_path)
+  model.load_state_dict(checkpoint['model_state_dict'])
 
 def drop_path(x, drop_prob):
   if drop_prob > 0.:

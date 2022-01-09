@@ -107,8 +107,8 @@ def save_checkpoint_search(model, checkpoint_path, epoch, optimizer):
   'epoch': epoch,
   'model_state_dict': model.state_dict(),
   'optimizer_state_dict': optimizer.state_dict(),
-  'alphas_reduce': model.alphas_normal,
-  'alphas_normal': model.alphas_reduce,
+  'alphas_reduce': model.alphas_reduce,
+  'alphas_normal': model.alphas_normal,
   'genotype': model.genotype(),
   }, checkpoint_path)
 

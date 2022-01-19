@@ -7,14 +7,14 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 
 class FaceDataset(torch.utils.data.Dataset):
-  def __init__(self, in_path, limit=10000, mode='train', img_size=(56, 56)):
+  def __init__(self, in_path, limit=10000, mode='train', img_size=(112,112)):
     super(FaceDataset, self).__init__()
 
     self.mode = mode #train or test
     self.in_path = in_path #
-    self.img_size = img_size # (180, 180)
+    self.img_size = img_size # 
     self.transform = transforms.Compose([
-     transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))
+     transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5)),
     ])
     print(self.in_path)
     self.labels = []
@@ -23,18 +23,30 @@ class FaceDataset(torch.utils.data.Dataset):
     self.labels_val = []
     c = 0
     self.limit = limit
-    for (dirpath, dirnames, filenames) in os.walk(self.in_path):
-      for file in filenames:
-        _, ext = os.path.splitext(file)
-        if ext == ".jpeg" and c < limit:
-          self.labels.append(os.path.basename(os.path.normpath(dirpath)))
-          self.imgs_path.append(os.path.join(dirpath, file))
-          c = c+1
+    print("adding paths")
+    with open('data_set.txt', 'w') as f:
+      for (dirpath, dirnames, filenames) in os.walk(dataset_dir_ms1m):
+        if c >= limit:
+          print("break")
+          break;
+        else:
+          for file in filenames:
+            _, ext = os.path.splitext(file)
+            if ext == ".jpeg" and c < limit:
+              self.labels.append(os.path.basename(os.path.normpath(dirpath)))
+              self.imgs_path.append(os.path.join(dirpath, file))
+              c = c+1
+              item = os.path.join(dirpath, file) + "," + os.path.basename(os.path.normpath(dirpath))
+              f.write("%s\n" % item)
+            else:
+              c = c+1
+              break;
+    print("finished adding paths")
 
-    self.imgs_path ,self.imgs_path_val = train_test_split(self.imgs_path,test_size=0.5, random_state=42)
-    self.labels ,self.labels_val = train_test_split(self.labels,test_size=0.5, random_state=42)
-    
-    self.data =  numpy.array(list(zip(self.imgs_path, self.labels)))
+    self.imgs_path ,self.imgs_path_val = train_test_split(self.imgs_path,test_size=0.1, random_state=42)
+    self.labels ,self.labels_val = train_test_split(self.labels,test_size=0.1, random_state=42)
+    print("finished splits")
+    self.data =  numpy.array(list(zip(self.imgs_path, self.labels)))        
     self.data_val =  numpy.array(list(zip(self.imgs_path_val, self.labels_val)))
 
   def __len__(self):
@@ -97,13 +109,15 @@ class FaceDataset(torch.utils.data.Dataset):
 
 dataset_dir = "./lfw_funneled"
 dataset_dir_td = "./TD_RGB"
-dataset_dir_ms1m = "./ms1m-retinaface"
+dataset_dir_ms1m = "../ms1m-data"
+#dataset_dir_ms1m = "../TD_RGB"
 
 class DataLoaderFace():
     def __init__(self, batch_size, workers, limit=10000):
         super(DataLoaderFace, self).__init__()
         self.trainloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, limit=limit), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val", limit=limit), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        #self.searchloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val", limit=limit), batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+        self.searchloader = ""
         self.valloader = torch.utils.data.DataLoader(FaceDataset(dataset_dir_ms1m, mode="val", limit=limit), batch_size=4, shuffle=True, num_workers=workers, pin_memory=True)
 
     def get_trainloader(self):

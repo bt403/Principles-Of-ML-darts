@@ -13,7 +13,6 @@ import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
 from face_dataset_train import DataLoaderFace
 from face_dataset_test import DataLoaderFaceTest
-
 import math
 
 from torch.autograd import Variable
@@ -43,14 +42,68 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 
 output_dimension = 128
-threshold = 0.547
+testset = args.testset
+
+def obtainMetrics(results, threshold):
+    results_matrix = np.array(results)
+    true_labels = np.array(results_matrix[:, 1]).astype(int)
+    distance = np.array(results_matrix[:, 0]).astype(float)
+    pred_labels = np.where(distance <= threshold, 1, 0)
+    TP = np.sum(np.logical_and(pred_labels == 1, true_labels == 1))
+    TN = np.sum(np.logical_and(pred_labels == 0, true_labels == 0))
+    FP = np.sum(np.logical_and(pred_labels == 1, true_labels == 0))
+    FN = np.sum(np.logical_and(pred_labels == 0, true_labels == 1))
+    FP_Rate = FP*100.0/(FP + TN)
+    FN_Rate = FN*100.0/(FN + TP)
+
+    if (math.isnan(FP_Rate)):
+        FP_Rate = 0.0
+    if (math.isnan(FN_Rate)):
+        FN_Rate = 0.0
+    Accuracy = (TP + TN)*100.0/(TP + TN + FP + FN)
+    return (FP_Rate, FN_Rate, Accuracy)
+
+def obtainThreshold(results):
+  threshold = 0.2
+  FP_Rate, FN_Rate, Accuracy = obtainMetrics(results, threshold)
+  old = (FP_Rate, FN_Rate, Accuracy, threshold)
+
+  #Increase threshold by 0.1
+  while FP_Rate < FN_Rate and threshold:
+    old = (FP_Rate, FN_Rate, Accuracy, threshold)
+    threshold = threshold + 0.1
+    FP_Rate, FN_Rate, Accuracy = obtainMetrics(results, threshold)
+  FP_Rate, FN_Rate, Accuracy, threshold = old
+
+  #Increase threshold by 0.05
+  while FP_Rate < FN_Rate and threshold:
+    old = (FP_Rate, FN_Rate, Accuracy, threshold)
+    threshold = threshold + 0.05
+    FP_Rate, FN_Rate, Accuracy = obtainMetrics(results, threshold)
+  FP_Rate, FN_Rate, Accuracy, threshold = old
+
+  #Increase threshold by 0.01
+  while FP_Rate < FN_Rate and threshold:
+    old = (FP_Rate, FN_Rate, Accuracy, threshold)
+    threshold = threshold + 0.01
+    FP_Rate, FN_Rate, Accuracy = obtainMetrics(results, threshold)
+  FP_Rate, FN_Rate, Accuracy, threshold = old
+
+  #Increase threshold by 0.001
+  while FP_Rate < FN_Rate and threshold:
+    old = (FP_Rate, FN_Rate, Accuracy, threshold)
+    threshold = threshold + 0.001
+    FP_Rate, FN_Rate, Accuracy = obtainMetrics(results, threshold)
+
+  if abs(old[0]-old[1]) < abs(FP_Rate - FN_Rate):
+    FP_Rate, FN_Rate, Accuracy, threshold = old
+  return (FP_Rate, FN_Rate, Accuracy, threshold)
 
 def main():
   if not torch.cuda.is_available():
     logging.info('no gpu device available')
     sys.exit(1)
-  testset = args.testset
-  
+
   np.random.seed(args.seed)
   torch.cuda.set_device(args.gpu)
   cudnn.benchmark = True
@@ -74,14 +127,16 @@ def main():
     valid_queue = dataLoaderFace.get_valloader()
 
   model.drop_path_prob = args.drop_path_prob
-  accuracy = infer(valid_queue, model, testset)
-  logging.info('Accuracy %f', accuracy)
+  results = infer(valid_queue, model, testset)
+  FP_Rate, FN_Rate, Accuracy, threshold = obtainThreshold(results)
+  print(FP_Rate, FN_Rate, Accuracy, threshold)
+  logging.info('Accuracies %f %f %f %f', FP_Rate, FN_Rate, Accuracy, threshold)
 
 
 def infer(valid_queue, model, testset):
   model.eval()
-  accuracy = utils.AvgrageMeter()
   results = []
+  print("running")
   for step, data in enumerate(valid_queue):
     if (testset == "lfw"):
       anchor_img, other_img, truth, anchor_label, other_label = data[0], data[1], data[2], data[3], data[4]
@@ -100,37 +155,37 @@ def infer(valid_queue, model, testset):
     if (testset == "lfw"):
       anchor_out, _ = model(anchor_img)
       other_out, _ = model(other_img)
-      #print(anchor_label)
       if(truth == 1):
-        #print(other_label)
         labels_p = torch.from_numpy(np.ones((1, other_img.shape[0]), dtype=None)).cuda(non_blocking=True)
         dist_p = (other_out - anchor_out).pow(2).sum(1)
-        print("DIST P")
-        print(dist_p)
       else:
-        print(other_label)
         labels_n = torch.from_numpy(np.zeros((1, other_img.shape[0]), dtype=None)).cuda(non_blocking=True)
         dist_n = (other_out - anchor_out).pow(2).sum(1)
-        print("DIST N")
-        print(dist_n)
     else:
-      labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
-      labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
-        
-      anchor_out, _ = model(anchor_img)
-      positive_out, _ = model(positive_img)
-      negative_out, _ = model(negative_img)
+        labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+        labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
 
-      dist_p = (positive_out - anchor_out).pow(2).sum(1)
-      dist_n = (negative_out - anchor_out).pow(2).sum(1)
-    
-    prec = utils.accuracy_face(dist_p, dist_n, threshold)
-    accuracy.update(prec, n)
+        anchor_out, _ = model(anchor_img)
+        positive_out, _ = model(positive_img)
+        negative_out, _ = model(negative_img)
+
+        dist_p = (positive_out - anchor_out).pow(2).sum(1)
+        dist_n = (negative_out - anchor_out).pow(2).sum(1)
+    c = 0
+    for i in dist_p:
+        row = [dist_p[c].item(), 1]
+        results.append(row)
+        c = c+1
+    c = 0
+    for j in dist_n:
+        row = row = [dist_n[c].item(), 0]
+        results.append(row)
+        c = c+1
 
     if step % args.report_freq == 0:
-      logging.info('valid %03d %f', step, accuracy.avg)
+      logging.info('valid %03d', step)
 
-  return accuracy.avg
+  return results
 
 
 

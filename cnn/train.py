@@ -12,6 +12,8 @@ import genotypes
 import torch.utils
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
+from face_dataset_train import DataLoaderFace
+
 
 from torch.autograd import Variable
 from model import NetworkCIFAR as Network
@@ -38,6 +40,8 @@ parser.add_argument('--save', type=str, default='EXP', help='experiment name')
 parser.add_argument('--seed', type=int, default=0, help='random seed')
 parser.add_argument('--arch', type=str, default='DARTS', help='which architecture to use')
 parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping')
+parser.add_argument('--sample_limit', type=int, default=10000, help='subsampling limit for search training')
+
 args = parser.parse_args()
 
 args.save = 'eval-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
@@ -50,8 +54,23 @@ fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-CIFAR_CLASSES = 10
+output_dimension = 128
+threshold = 0.5
 
+class ContrastiveLoss(torch.nn.Module):
+    """
+    Contrastive loss function.
+    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    """
+
+    def __init__(self, margin=1.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, dist, label):
+        loss = torch.mean(1/2*(label) * torch.pow(dist, 2) +
+                                      1/2*(1-label) * torch.pow(torch.clamp(self.margin - dist, min=0.0), 2))
+        return loss
 
 def main():
   if not torch.cuda.is_available():
@@ -68,12 +87,14 @@ def main():
   logging.info("args = %s", args)
 
   genotype = eval("genotypes.%s" % args.arch)
-  model = Network(args.init_channels, CIFAR_CLASSES, args.layers, args.auxiliary, genotype)
+  model = Network(args.init_channels, output_dimension, args.layers, args.auxiliary, genotype)
   model = model.cuda()
+  if(args.model_path != "saved_models"):
+    utils.load(model, args.model_path)
 
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
 
-  criterion = nn.CrossEntropyLoss()
+  criterion = torch.jit.script(ContrastiveLoss())
   criterion = criterion.cuda()
   optimizer = torch.optim.SGD(
       model.parameters(),
@@ -82,18 +103,15 @@ def main():
       weight_decay=args.weight_decay
       )
 
-  train_transform, valid_transform = utils._data_transforms_cifar10(args)
-  train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
-  valid_data = dset.CIFAR10(root=args.data, train=False, download=True, transform=valid_transform)
-
-  train_queue = torch.utils.data.DataLoader(
-      train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=2)
-
-  valid_queue = torch.utils.data.DataLoader(
-      valid_data, batch_size=args.batch_size, shuffle=False, pin_memory=True, num_workers=2)
+  #train_transform, valid_transform = utils._data_transforms_cifar10(args)
+  print("creating dataloader")
+  dataLoaderFace = DataLoaderFace(args.batch_size, workers=4, limit=args.sample_limit)
+  train_queue = dataLoaderFace.get_trainloader()
+  print("finished creating dataloader 1")
+  valid_queue = dataLoaderFace.get_valloader()
+  print("finished creating dataloader 2")
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs))
-
   for epoch in range(args.epochs):
     scheduler.step()
     logging.info('epoch %d lr %e', epoch, scheduler.get_lr()[0])
@@ -105,64 +123,96 @@ def main():
     valid_acc, valid_obj = infer(valid_queue, model, criterion)
     logging.info('valid_acc %f', valid_acc)
 
-    utils.save(model, os.path.join(args.save, 'weights.pt'))
+    utils.save(model, os.path.join(args.save, str(epoch) + '_weights.pt'))
 
 
 def train(train_queue, model, criterion, optimizer):
   objs = utils.AvgrageMeter()
-  top1 = utils.AvgrageMeter()
-  top5 = utils.AvgrageMeter()
+  accuracy = utils.AvgrageMeter()
   model.train()
 
-  for step, (input, target) in enumerate(train_queue):
-    input = Variable(input).cuda()
-    target = Variable(target).cuda(non_blocking=True)
+  for step, data in enumerate(train_queue):
+    anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
 
+    anchor_img = Variable(anchor_img, requires_grad=False).cuda()
+    positive_img = Variable(positive_img, requires_grad=False).cuda()
+    negative_img = Variable(negative_img, requires_grad=False).cuda()
+    labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+    labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+ 
     optimizer.zero_grad()
-    logits, logits_aux = model(input)
-    loss = criterion(logits, target)
+    
+    anchor_out, anchor_out_aux = model(anchor_img)
+    positive_out, positive_out_aux = model(positive_img)
+    negative_out, negative_out_aux = model(negative_img)
+
+    dist_p = (positive_out - anchor_out).pow(2).sum(1)
+    dist_n = (negative_out - anchor_out).pow(2).sum(1)
+    loss_p = criterion(dist_p, labels_p)
+    loss_n = criterion(dist_n, labels_n)
+    loss = loss_n + loss_p
+    
     if args.auxiliary:
-      loss_aux = criterion(logits_aux, target)
+      dist_p_aux = (positive_out_aux - anchor_out_aux).pow(2).sum(1)
+      dist_n_aux = (negative_out_aux - anchor_out_aux).pow(2).sum(1)
+      loss_p_aux = criterion(dist_p_aux, labels_p)
+      loss_n_aux = criterion(dist_n_aux, labels_n)
+      loss_aux = loss_n_aux + loss_p_aux
       loss += args.auxiliary_weight*loss_aux
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
-    n = input.size(0)
+    n = positive_img.shape[0]
+    prec = utils.accuracy_face(dist_p, dist_n, threshold)
     objs.update(loss.data.item(), n)
-    top1.update(prec1.data.item(), n)
-    top5.update(prec5.data.item(), n)
+    accuracy.update(prec, n)
+    
+    #top5.update(prec5.data.item(), n)
 
     if step % args.report_freq == 0:
-      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+      print("--- Distances ---")
+      print(dist_p)
+      print(dist_n)
+      logging.info('train %03d %f %f', step, objs.avg, accuracy.avg)
 
-  return top1.avg, objs.avg
+  return accuracy.avg, objs.avg
 
 
 def infer(valid_queue, model, criterion):
   objs = utils.AvgrageMeter()
-  top1 = utils.AvgrageMeter()
-  top5 = utils.AvgrageMeter()
+  accuracy = utils.AvgrageMeter()
   model.eval()
 
-  for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True).cuda()
-    target = Variable(target, volatile=True).cuda(non_blocking=True)
+  for step, data in enumerate(valid_queue):
+    anchor_img, positive_img, negative_img, anchor_label, negative_label = data[0], data[1], data[2], data[3], data[4]
+    anchor_img = Variable(anchor_img, requires_grad=False).cuda()
+    positive_img = Variable(positive_img, requires_grad=False).cuda()
+    negative_img = Variable(negative_img, requires_grad=False).cuda()
 
-    logits, _ = model(input)
-    loss = criterion(logits, target)
+    n = positive_img.shape[0]
 
-    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
-    n = input.size(0)
+    labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+    labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
+
+    anchor_out, _ = model(anchor_img)
+    positive_out, _ = model(positive_img)
+    negative_out, _ = model(negative_img)
+
+    dist_p = (positive_out - anchor_out).pow(2).sum(1)
+    dist_n = (negative_out - anchor_out).pow(2).sum(1)
+    loss_p = criterion(dist_p, labels_p)
+    loss_n = criterion(dist_n, labels_n)
+    loss = loss_n + loss_p
+
+    prec = utils.accuracy_face(dist_p, dist_n, threshold)
     objs.update(loss.data.item(), n)
-    top1.update(prec1.data.item(), n)
-    top5.update(prec5.data.item(), n)
-
+    accuracy.update(prec, n)
+    
     if step % args.report_freq == 0:
-      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+      logging.info('valid %03d %f %f', step, objs.avg, accuracy.avg)
 
-  return top1.avg, objs.avg
+  return accuracy.avg, objs.avg
 
 
 if __name__ == '__main__':

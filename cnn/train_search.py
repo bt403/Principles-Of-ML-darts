@@ -12,7 +12,7 @@ import torch.utils
 import torch.nn.functional as F
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
-from face_dataset import DataLoaderFace
+from face_dataset_search import DataLoaderFace
 from torch.autograd import Variable
 from model_search import Network
 from architect import Architect

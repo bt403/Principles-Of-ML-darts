@@ -41,7 +41,7 @@ def accuracy_face(dist_p, dist_n, threshold):
   true_positives = (dist_p < threshold).sum()
   true_negatives = (dist_n >= threshold).sum()
   accuracy = (true_positives + true_negatives)/total
-  print("Accuracy : " + str(accuracy))
+  #print("Accuracy : " + str(accuracy))
   return accuracy
 
 

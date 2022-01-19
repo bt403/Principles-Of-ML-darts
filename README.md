@@ -8,7 +8,7 @@ Finding the best architecture requires considerable resources and human trial an
 <img width="50%" src="./img/model-diagram.png" />
 
 ## Demo and instructions
-Examples of loading the data, training and validating the models can be seen in the Colab notebook. The Colab notebook with the demo can be found in the following URL: dddddd.com
+Examples of the implementation of the code can be seen in the Colab notebook which can be found in the following URL: https://colab.research.google.com/drive/1u26K_qJH6iv9X0ZRZP495ZuW4NdcuvJn?usp=sharing
 
 ## Original DARTS implementation: 
 https://github.com/quark0/darts

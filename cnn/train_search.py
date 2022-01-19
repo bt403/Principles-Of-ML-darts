@@ -185,7 +185,6 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     prec = utils.accuracy_face(dist_p, dist_n, threshold)
     objs.update(loss.data.item(), n)
     accuracy.update(prec, n)
-    #top5.update(prec5.data.item(), n)
 
     if step % args.report_freq == 0:
       print("--- Distances ---")

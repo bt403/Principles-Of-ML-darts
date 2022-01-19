@@ -101,19 +101,12 @@ def infer(valid_queue, model, testset):
     if (testset == "lfw"):
       anchor_out, _ = model(anchor_img)
       other_out, _ = model(other_img)
-      #print(anchor_label)
       if(truth == 1):
-        #print(other_label)
         labels_p = torch.from_numpy(np.ones((1, other_img.shape[0]), dtype=None)).cuda(non_blocking=True)
         dist_p = (other_out - anchor_out).pow(2).sum(1)
-        print("DIST P")
-        print(dist_p)
       else:
-        print(other_label)
         labels_n = torch.from_numpy(np.zeros((1, other_img.shape[0]), dtype=None)).cuda(non_blocking=True)
         dist_n = (other_out - anchor_out).pow(2).sum(1)
-        print("DIST N")
-        print(dist_n)
     else:
       labels_p = torch.from_numpy(np.ones((1, positive_img.shape[0]), dtype=None)).cuda(non_blocking=True)
       labels_n = torch.from_numpy(np.zeros((1, negative_img.shape[0]), dtype=None)).cuda(non_blocking=True)
@@ -132,9 +125,6 @@ def infer(valid_queue, model, testset):
       logging.info('valid %03d %f', step, accuracy.avg)
 
   return accuracy.avg
-
-
-
 
 
 if __name__ == '__main__':

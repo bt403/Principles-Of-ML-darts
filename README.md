@@ -10,5 +10,8 @@ Finding the best architecture requires considerable resources and human trial an
 ## Demo and instructions
 Examples of the implementation of the code can be seen in the Colab notebook which can be found in the following URL: https://colab.research.google.com/drive/1u26K_qJH6iv9X0ZRZP495ZuW4NdcuvJn?usp=sharing
 
+## Trained models
+https://drive.google.com/drive/folders/1IYFo-plxQwiZCIJZOhhBcnrM5cfP_tkJ
+
 ## Original DARTS implementation: 
 https://github.com/quark0/darts

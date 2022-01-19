@@ -36,6 +36,7 @@ parser.add_argument('--seed', type=int, default=0, help='random seed')
 parser.add_argument('--arch', type=str, default='DARTS', help='which architecture to use')
 parser.add_argument('--testset', type=str, default='ms1m', help='which architecture to use')
 parser.add_argument('--sample_limit', type=int, default=10000, help='subsampling limit for search training')
+parser.add_argument('--threshold', type=int, default=0.5, help='threshold value for testing')
 args = parser.parse_args()
 
 log_format = '%(asctime)s %(message)s'
@@ -43,7 +44,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 
 output_dimension = 128
-threshold = 0.547
+threshold = args.threshold
 
 def main():
   if not torch.cuda.is_available():
